@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { format, addDays, isWeekend } from 'date-fns';
-import { CalendarDays, Clock, Send, AlertTriangle } from 'lucide-react';
+import { CalendarDays, Clock, Send, AlertTriangle, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,46 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConflictWarning } from '@/components/leave/ConflictWarning';
 import { cn } from '@/lib/utils';
-import type { LeaveType, ConflictAnalysis, LeaveRequest } from '@/types';
+import { useLeaveTypes, useCreateLeaveRequest } from '@/hooks';
+import { useUserStore } from '@/stores';
+import type { ConflictAnalysis, LeaveRequest } from '@/types';
 
-// Mock data
-const mockLeaveTypes: LeaveType[] = [
-    {
-        id: '1',
-        name: 'Annual Leave',
-        code: 'AL',
-        color: '#3B82F6',
-        icon: 'sun',
-        requiresApproval: true,
-        maxDaysPerRequest: null,
-        isActive: true,
-        sortOrder: 1,
-    },
-    {
-        id: '2',
-        name: 'Sick Leave',
-        code: 'SL',
-        color: '#EF4444',
-        icon: 'thermometer',
-        requiresApproval: false,
-        maxDaysPerRequest: 5,
-        isActive: true,
-        sortOrder: 2,
-    },
-    {
-        id: '3',
-        name: 'Personal Leave',
-        code: 'PL',
-        color: '#8B5CF6',
-        icon: 'user',
-        requiresApproval: true,
-        maxDaysPerRequest: 3,
-        isActive: true,
-        sortOrder: 3,
-    },
-];
-
-// Mock conflict analysis function
+// Mock conflict analysis function (will be replaced with AI service later)
 function analyzeConflicts(
     startDate: Date | undefined,
     endDate: Date | undefined
@@ -122,6 +88,13 @@ function calculateWorkingDays(start: Date, end: Date, halfStart: boolean, halfEn
 }
 
 export default function RequestLeave() {
+    const navigate = useNavigate();
+    const { user } = useUserStore();
+
+    // Fetch leave types from Dataverse
+    const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
+    const createRequest = useCreateLeaveRequest();
+
     // Form state
     const [leaveTypeId, setLeaveTypeId] = useState<string>('');
     const [startDate, setStartDate] = useState<Date>();
@@ -129,11 +102,10 @@ export default function RequestLeave() {
     const [halfDayStart, setHalfDayStart] = useState(false);
     const [halfDayEnd, setHalfDayEnd] = useState(false);
     const [reason, setReason] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [conflictDismissed, setConflictDismissed] = useState(false);
 
     // Selected leave type
-    const selectedLeaveType = mockLeaveTypes.find((t) => t.id === leaveTypeId);
+    const selectedLeaveType = leaveTypes?.find((t) => t.id === leaveTypeId);
 
     // Calculate total days
     const totalDays = useMemo(() => {
@@ -152,16 +124,35 @@ export default function RequestLeave() {
 
     // Handle submit
     const handleSubmit = async () => {
-        if (!isValid) return;
+        if (!isValid || !user || !startDate || !endDate) return;
 
-        setIsSubmitting(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsSubmitting(false);
+        try {
+            await createRequest.mutateAsync({
+                request: {
+                    leaveTypeId,
+                    startDate,
+                    endDate,
+                    halfDayStart,
+                    halfDayEnd,
+                    reason: reason || undefined,
+                },
+                employeeId: user.id,
+            });
 
-        // Would navigate to requests page
-        console.log('Submitted:', { leaveTypeId, startDate, endDate, halfDayStart, halfDayEnd, reason, totalDays });
+            // Navigate to requests page on success
+            navigate('/requests');
+        } catch (error) {
+            console.error('Failed to create leave request:', error);
+        }
     };
+
+    if (typesLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6">
@@ -191,7 +182,7 @@ export default function RequestLeave() {
                                     <SelectValue placeholder="Select leave type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {mockLeaveTypes.map((type) => (
+                                    {leaveTypes?.map((type) => (
                                         <SelectItem key={type.id} value={type.id}>
                                             <div className="flex items-center gap-2">
                                                 <span
@@ -330,15 +321,15 @@ export default function RequestLeave() {
                             </Button>
                             <Button
                                 onClick={handleSubmit}
-                                disabled={!isValid || isSubmitting}
+                                disabled={!isValid || createRequest.isPending}
                                 className="min-w-[120px]"
                             >
-                                {isSubmitting ? (
+                                {createRequest.isPending ? (
                                     <Clock className="mr-2 h-4 w-4 animate-spin" />
                                 ) : (
                                     <Send className="mr-2 h-4 w-4" />
                                 )}
-                                {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                                {createRequest.isPending ? 'Submitting...' : 'Submit Request'}
                             </Button>
                         </div>
                     </CardContent>

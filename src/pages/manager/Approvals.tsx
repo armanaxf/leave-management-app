@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, Users, Filter } from 'lucide-react';
+import { Check, X, Users, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,112 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { LeaveRequestCard } from '@/components/leave/LeaveRequestCard';
-import type { LeaveRequest, LeaveType, ConflictSeverity } from '@/types';
-
-// Mock data
-const mockLeaveTypes: LeaveType[] = [
-    { id: '1', name: 'Annual Leave', code: 'AL', color: '#3B82F6', icon: 'sun', requiresApproval: true, maxDaysPerRequest: null, isActive: true, sortOrder: 1 },
-    { id: '2', name: 'Sick Leave', code: 'SL', color: '#EF4444', icon: 'thermometer', requiresApproval: false, maxDaysPerRequest: 5, isActive: true, sortOrder: 2 },
-    { id: '3', name: 'Personal Leave', code: 'PL', color: '#8B5CF6', icon: 'user', requiresApproval: true, maxDaysPerRequest: 3, isActive: true, sortOrder: 3 },
-];
-
-const mockPendingRequests: (LeaveRequest & { conflictSeverity?: ConflictSeverity })[] = [
-    {
-        id: '1',
-        employeeId: 'emp1',
-        employeeEmail: 'sarah@example.com',
-        employeeName: 'Sarah Wilson',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-03-10'),
-        endDate: new Date('2026-03-14'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 5,
-        reason: 'Family vacation',
-        status: 'pending',
-        createdAt: new Date('2026-02-01'),
-        updatedAt: new Date('2026-02-01'),
-        conflictSeverity: 'high',
-    },
-    {
-        id: '2',
-        employeeId: 'emp2',
-        employeeEmail: 'james@example.com',
-        employeeName: 'James Chen',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-03-20'),
-        endDate: new Date('2026-03-21'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 2,
-        reason: 'Personal appointment',
-        status: 'pending',
-        createdAt: new Date('2026-02-02'),
-        updatedAt: new Date('2026-02-02'),
-        conflictSeverity: 'medium',
-    },
-    {
-        id: '3',
-        employeeId: 'emp3',
-        employeeEmail: 'emma@example.com',
-        employeeName: 'Emma Thompson',
-        leaveTypeId: '3',
-        leaveType: mockLeaveTypes[2],
-        startDate: new Date('2026-02-15'),
-        endDate: new Date('2026-02-15'),
-        halfDayStart: true,
-        halfDayEnd: false,
-        totalDays: 0.5,
-        status: 'pending',
-        createdAt: new Date('2026-02-02'),
-        updatedAt: new Date('2026-02-02'),
-    },
-];
-
-const mockProcessedRequests: LeaveRequest[] = [
-    {
-        id: '4',
-        employeeId: 'emp1',
-        employeeEmail: 'sarah@example.com',
-        employeeName: 'Sarah Wilson',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-01-15'),
-        endDate: new Date('2026-01-17'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 3,
-        status: 'approved',
-        approverId: 'manager1',
-        approverName: 'You',
-        approvedAt: new Date('2026-01-10'),
-        createdAt: new Date('2026-01-08'),
-        updatedAt: new Date('2026-01-10'),
-    },
-    {
-        id: '5',
-        employeeId: 'emp2',
-        employeeEmail: 'james@example.com',
-        employeeName: 'James Chen',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-01-20'),
-        endDate: new Date('2026-01-25'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 6,
-        reason: 'Conference attendance',
-        status: 'rejected',
-        approverId: 'manager1',
-        approverName: 'You',
-        approverComments: 'Team is already at reduced capacity during this period. Please choose alternative dates.',
-        approvedAt: new Date('2026-01-10'),
-        createdAt: new Date('2026-01-05'),
-        updatedAt: new Date('2026-01-10'),
-    },
-];
+import { useLeaveRequests, useLeaveTypes, useApproveLeaveRequest, useRejectLeaveRequest } from '@/hooks';
+import { useUserStore } from '@/stores';
+import type { LeaveRequest, ConflictSeverity } from '@/types';
 
 // Container animation
 const container = {
@@ -133,6 +30,14 @@ const item = {
 };
 
 export default function Approvals() {
+    const { user } = useUserStore();
+
+    // Fetch data using hooks
+    const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
+    const { data: allRequests, isLoading: requestsLoading } = useLeaveRequests();
+    const approveMutation = useApproveLeaveRequest();
+    const rejectMutation = useRejectLeaveRequest();
+
     const [activeTab, setActiveTab] = useState('pending');
     const [filterType, setFilterType] = useState<string>('all');
     const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
@@ -140,20 +45,41 @@ export default function Approvals() {
     const [rejectComment, setRejectComment] = useState('');
     const [processing, setProcessing] = useState<string | null>(null);
 
+    const isLoading = typesLoading || requestsLoading;
+
+    // Separate pending and processed requests
+    const pendingRequests = useMemo(() =>
+        allRequests?.filter(r => r.status === 'pending') || [],
+        [allRequests]
+    );
+
+    const processedRequests = useMemo(() =>
+        allRequests?.filter(r => r.status === 'approved' || r.status === 'rejected') || [],
+        [allRequests]
+    );
+
     // Filter pending requests
     const filteredPending = useMemo(() => {
-        if (filterType === 'all') return mockPendingRequests;
-        if (filterType === 'conflicts') return mockPendingRequests.filter(r => r.conflictSeverity && r.conflictSeverity !== 'low');
-        return mockPendingRequests.filter(r => r.leaveTypeId === filterType);
-    }, [filterType]);
+        if (filterType === 'all') return pendingRequests;
+        // Note: conflict filtering will be added when AI service is integrated
+        if (filterType === 'conflicts') return pendingRequests;
+        return pendingRequests.filter(r => r.leaveTypeId === filterType);
+    }, [filterType, pendingRequests]);
 
     // Handle approve
     const handleApprove = async (id: string) => {
+        if (!user) return;
         setProcessing(id);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            await approveMutation.mutateAsync({
+                id,
+                approverId: user.id,
+                approverName: user.displayName,
+            });
+        } catch (error) {
+            console.error('Failed to approve request:', error);
+        }
         setProcessing(null);
-        console.log('Approved:', id);
-        // Would remove from list and show toast
     };
 
     // Handle reject
@@ -164,14 +90,29 @@ export default function Approvals() {
     };
 
     const handleRejectConfirm = async () => {
-        if (!selectedRequest) return;
+        if (!selectedRequest || !user) return;
         setProcessing(selectedRequest.id);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            await rejectMutation.mutateAsync({
+                id: selectedRequest.id,
+                approverId: user.id,
+                approverName: user.displayName,
+                comments: rejectComment || undefined,
+            });
+            setRejectDialogOpen(false);
+        } catch (error) {
+            console.error('Failed to reject request:', error);
+        }
         setProcessing(null);
-        setRejectDialogOpen(false);
-        console.log('Rejected:', selectedRequest.id, 'Comment:', rejectComment);
-        // Would remove from list and show toast
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6">
@@ -188,7 +129,7 @@ export default function Approvals() {
                 <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                        {mockPendingRequests.length} pending
+                        {pendingRequests.length} pending
                     </span>
                 </div>
             </div>
@@ -198,9 +139,9 @@ export default function Approvals() {
                     <TabsList>
                         <TabsTrigger value="pending" className="gap-2">
                             Pending
-                            {mockPendingRequests.length > 0 && (
+                            {pendingRequests.length > 0 && (
                                 <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                                    {mockPendingRequests.length}
+                                    {pendingRequests.length}
                                 </span>
                             )}
                         </TabsTrigger>
@@ -218,12 +159,9 @@ export default function Approvals() {
                                 <SelectItem value="conflicts">
                                     <span className="flex items-center gap-2">
                                         With Conflicts
-                                        <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">
-                                            {mockPendingRequests.filter(r => r.conflictSeverity && r.conflictSeverity !== 'low').length}
-                                        </span>
                                     </span>
                                 </SelectItem>
-                                {mockLeaveTypes.map(type => (
+                                {leaveTypes?.map(type => (
                                     <SelectItem key={type.id} value={type.id}>
                                         <span className="flex items-center gap-2">
                                             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: type.color }} />
@@ -255,7 +193,6 @@ export default function Approvals() {
                                         request={request}
                                         showEmployee
                                         showActions
-                                        conflictSeverity={request.conflictSeverity}
                                         onApprove={handleApprove}
                                         onReject={() => handleRejectClick(request)}
                                         className={processing === request.id ? 'opacity-50 pointer-events-none' : ''}
@@ -267,7 +204,7 @@ export default function Approvals() {
                 </TabsContent>
 
                 <TabsContent value="processed" className="mt-4">
-                    {mockProcessedRequests.length === 0 ? (
+                    {processedRequests.length === 0 ? (
                         <Card className="p-8 text-center">
                             <p className="text-muted-foreground">No processed requests yet</p>
                         </Card>
@@ -278,7 +215,7 @@ export default function Approvals() {
                             initial="hidden"
                             animate="show"
                         >
-                            {mockProcessedRequests.map((request) => (
+                            {processedRequests.map((request) => (
                                 <motion.div key={request.id} variants={item}>
                                     <LeaveRequestCard request={request} showEmployee />
                                 </motion.div>
@@ -312,8 +249,16 @@ export default function Approvals() {
                         <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
                             Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleRejectConfirm}>
-                            <X className="mr-2 h-4 w-4" />
+                        <Button
+                            variant="destructive"
+                            onClick={handleRejectConfirm}
+                            disabled={processing !== null}
+                        >
+                            {processing ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <X className="mr-2 h-4 w-4" />
+                            )}
                             Reject Request
                         </Button>
                     </DialogFooter>

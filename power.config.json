@@ -9,5 +9,40 @@
   "localAppUrl": "http://localhost:3000/",
   "region": "prod",
   "connectionReferences": {},
-  "databaseReferences": {}
+  "databaseReferences": {
+    "default.cds": {
+      "state": "Configured",
+      "instanceUrl": "https://org53e499d9.crm11.dynamics.com/",
+      "webApiVersion": "v9.0",
+      "dataSources": {
+        "leavetypes": {
+          "entitySetName": "lm_leavetypes",
+          "logicalName": "lm_leavetype",
+          "isHidden": false
+        },
+        "leaverequests": {
+          "entitySetName": "lm_leaverequests",
+          "logicalName": "lm_leaverequest",
+          "isHidden": false
+        },
+        "leavebalances": {
+          "entitySetName": "lm_leavebalances",
+          "logicalName": "lm_leavebalance",
+          "isHidden": false
+        },
+        "publicholidays": {
+          "entitySetName": "lm_publicholidaies",
+          "logicalName": "lm_publicholiday",
+          "isHidden": false
+        },
+        "appsettings": {
+          "entitySetName": "lm_appsettings",
+          "logicalName": "lm_appsetting",
+          "isHidden": false
+        }
+      },
+      "version": "v9.0",
+      "environmentVariableName": ""
+    }
+  }
 }

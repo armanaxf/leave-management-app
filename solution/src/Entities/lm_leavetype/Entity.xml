@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name LocalizedName="Leave Type" OriginalName="lm_leavetype">lm_leavetype</Name>
+  <EntityInfo>
+    <entity Name="lm_leavetype">
+      <LocalizedNames>
+        <LocalizedName description="Leave Type" languagecode="1033" />
+      </LocalizedNames>
+      <LocalizedCollectionNames>
+        <LocalizedCollectionName description="Leave Types" languagecode="1033" />
+      </LocalizedCollectionNames>
+      <Descriptions>
+        <Description description="Leave categories available for employees (Annual, Sick, Personal, etc.)" languagecode="1033" />
+      </Descriptions>
+      <attributes>
+        <attribute PhysicalName="lm_leavetypeid">
+          <Type>primarykey</Type>
+          <Name>lm_leavetypeid</Name>
+          <LogicalName>lm_leavetypeid</LogicalName>
+          <RequiredLevel>systemrequired</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind|ValidForForm|ValidForGrid</DisplayMask>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>0</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>0</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Leave Type" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Unique identifier for entity instances" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_name">
+          <Type>nvarchar</Type>
+          <Name>lm_name</Name>
+          <LogicalName>lm_name</LogicalName>
+          <RequiredLevel>required</RequiredLevel>
+          <MaxLength>100</MaxLength>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Name" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Display name of the leave type" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_code">
+          <Type>nvarchar</Type>
+          <Name>lm_code</Name>
+          <LogicalName>lm_code</LogicalName>
+          <RequiredLevel>required</RequiredLevel>
+          <MaxLength>10</MaxLength>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Code" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Short code for the leave type (e.g., AL, SL)" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_color">
+          <Type>nvarchar</Type>
+          <Name>lm_color</Name>
+          <LogicalName>lm_color</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <MaxLength>20</MaxLength>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Color" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Hex color code for UI display" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_icon">
+          <Type>nvarchar</Type>
+          <Name>lm_icon</Name>
+          <LogicalName>lm_icon</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <MaxLength>50</MaxLength>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Icon" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Lucide icon name for UI display" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_requiresapproval">
+          <Type>bit</Type>
+          <Name>lm_requiresapproval</Name>
+          <LogicalName>lm_requiresapproval</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DefaultValue>1</DefaultValue>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Requires Approval" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Whether this leave type requires manager approval" languagecode="1033" />
+          </Descriptions>
+          <optionset Name="lm_requiresapproval">
+            <OptionSetType>bit</OptionSetType>
+            <options>
+              <option value="0">
+                <labels>
+                  <label description="No" languagecode="1033" />
+                </labels>
+              </option>
+              <option value="1">
+                <labels>
+                  <label description="Yes" languagecode="1033" />
+                </labels>
+              </option>
+            </options>
+          </optionset>
+        </attribute>
+        <attribute PhysicalName="lm_maxdaysperrequest">
+          <Type>int</Type>
+          <Name>lm_maxdaysperrequest</Name>
+          <LogicalName>lm_maxdaysperrequest</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <MinValue>0</MinValue>
+          <MaxValue>365</MaxValue>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Max Days Per Request" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Maximum days allowed per request (null for unlimited)" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+        <attribute PhysicalName="lm_isactive">
+          <Type>bit</Type>
+          <Name>lm_isactive</Name>
+          <LogicalName>lm_isactive</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DefaultValue>1</DefaultValue>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Is Active" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Whether this leave type is active" languagecode="1033" />
+          </Descriptions>
+          <optionset Name="lm_isactive">
+            <OptionSetType>bit</OptionSetType>
+            <options>
+              <option value="0">
+                <labels>
+                  <label description="No" languagecode="1033" />
+                </labels>
+              </option>
+              <option value="1">
+                <labels>
+                  <label description="Yes" languagecode="1033" />
+                </labels>
+              </option>
+            </options>
+          </optionset>
+        </attribute>
+        <attribute PhysicalName="lm_sortorder">
+          <Type>int</Type>
+          <Name>lm_sortorder</Name>
+          <LogicalName>lm_sortorder</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <MinValue>0</MinValue>
+          <MaxValue>1000</MaxValue>
+          <ImeMode>auto</ImeMode>
+          <ValidForUpdateApi>1</ValidForUpdateApi>
+          <ValidForCreateApi>1</ValidForCreateApi>
+          <IsCustomField>1</IsCustomField>
+          <IsAuditEnabled>1</IsAuditEnabled>
+          <IsSecured>0</IsSecured>
+          <IsCustomizable>1</IsCustomizable>
+          <IsRenameable>1</IsRenameable>
+          <CanModifySearchSettings>1</CanModifySearchSettings>
+          <CanModifyRequirementLevelSettings>1</CanModifyRequirementLevelSettings>
+          <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+          <displaynames>
+            <displayname description="Sort Order" languagecode="1033" />
+          </displaynames>
+          <Descriptions>
+            <Description description="Display order in lists" languagecode="1033" />
+          </Descriptions>
+        </attribute>
+      </attributes>
+      <EntitySetName>lm_leavetypes</EntitySetName>
+      <IsBPFEntity>0</IsBPFEntity>
+      <IsCustomEntity>1</IsCustomEntity>
+      <IsActivity>0</IsActivity>
+      <ActivityTypeMask>0</ActivityTypeMask>
+      <OwnershipTypeMask>UserOwned</OwnershipTypeMask>
+      <IsAuditEnabled>1</IsAuditEnabled>
+      <IsVisibleInMobile>1</IsVisibleInMobile>
+      <IsVisibleInMobileClient>1</IsVisibleInMobileClient>
+      <IsAvailableOffline>1</IsAvailableOffline>
+      <IsChildEntity>0</IsChildEntity>
+      <IsCustomizable>1</IsCustomizable>
+      <IsRenameable>1</IsRenameable>
+      <IsValidForQueue>0</IsValidForQueue>
+      <IsConnectionsEnabled>0</IsConnectionsEnabled>
+      <CanCreateForms>1</CanCreateForms>
+      <CanCreateViews>1</CanCreateViews>
+      <CanCreateCharts>1</CanCreateCharts>
+      <CanBeRelatedEntityInRelationship>1</CanBeRelatedEntityInRelationship>
+      <CanBePrimaryEntityInRelationship>1</CanBePrimaryEntityInRelationship>
+      <CanBeInManyToMany>1</CanBeInManyToMany>
+      <CanEnableSyncToExternalSearchIndex>1</CanEnableSyncToExternalSearchIndex>
+      <SyncToExternalSearchIndex>0</SyncToExternalSearchIndex>
+      <CanModifyAdditionalSettings>1</CanModifyAdditionalSettings>
+      <CanChangeHierarchicalRelationship>1</CanChangeHierarchicalRelationship>
+      <CanChangeTrackingBeEnabled>1</CanChangeTrackingBeEnabled>
+      <IsOptimisticConcurrencyEnabled>1</IsOptimisticConcurrencyEnabled>
+      <ChangeTrackingEnabled>0</ChangeTrackingEnabled>
+      <IsImportable>1</IsImportable>
+      <IsIntersect>0</IsIntersect>
+      <IsManaged>0</IsManaged>
+      <IsEnabledForCharts>1</IsEnabledForCharts>
+      <EnforceStateTransitions>0</EnforceStateTransitions>
+      <IsEnabledForTrace>0</IsEnabledForTrace>
+      <PrimaryIdAttribute>lm_leavetypeid</PrimaryIdAttribute>
+      <PrimaryNameAttribute>lm_name</PrimaryNameAttribute>
+    </entity>
+  </EntityInfo>
+  <FormXml>
+    <forms type="main">
+      <systemform>
+        <formid>{00000000-0000-0000-0000-000000000001}</formid>
+        <IsCustomizable>1</IsCustomizable>
+        <CanBeDeleted>0</CanBeDeleted>
+        <LocalizedNames>
+          <LocalizedName description="Information" languagecode="1033" />
+        </LocalizedNames>
+        <Descriptions>
+          <Description description="Main form for Leave Type" languagecode="1033" />
+        </Descriptions>
+      </systemform>
+    </forms>
+  </FormXml>
+</Entity>

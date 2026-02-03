@@ -1,117 +1,16 @@
 // Leave Management App - My Requests Page
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Calendar, Filter } from 'lucide-react';
+import { Calendar, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LeaveRequestCard } from '@/components/leave/LeaveRequestCard';
-import type { LeaveRequest, LeaveType, LeaveStatus } from '@/types';
-
-// Mock data
-const mockLeaveTypes: LeaveType[] = [
-    { id: '1', name: 'Annual Leave', code: 'AL', color: '#3B82F6', icon: 'sun', requiresApproval: true, maxDaysPerRequest: null, isActive: true, sortOrder: 1 },
-    { id: '2', name: 'Sick Leave', code: 'SL', color: '#EF4444', icon: 'thermometer', requiresApproval: false, maxDaysPerRequest: 5, isActive: true, sortOrder: 2 },
-    { id: '3', name: 'Personal Leave', code: 'PL', color: '#8B5CF6', icon: 'user', requiresApproval: true, maxDaysPerRequest: 3, isActive: true, sortOrder: 3 },
-];
-
-const mockRequests: LeaveRequest[] = [
-    {
-        id: '1',
-        employeeId: 'me',
-        employeeEmail: 'me@example.com',
-        employeeName: 'Me',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-03-10'),
-        endDate: new Date('2026-03-14'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 5,
-        reason: 'Family vacation to Cornwall',
-        status: 'pending',
-        createdAt: new Date('2026-02-01'),
-        updatedAt: new Date('2026-02-01'),
-    },
-    {
-        id: '2',
-        employeeId: 'me',
-        employeeEmail: 'me@example.com',
-        employeeName: 'Me',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-01-15'),
-        endDate: new Date('2026-01-17'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 3,
-        reason: 'Long weekend trip',
-        status: 'approved',
-        approverId: 'manager1',
-        approverName: 'Alex Thompson',
-        approvedAt: new Date('2026-01-10'),
-        createdAt: new Date('2026-01-08'),
-        updatedAt: new Date('2026-01-10'),
-    },
-    {
-        id: '3',
-        employeeId: 'me',
-        employeeEmail: 'me@example.com',
-        employeeName: 'Me',
-        leaveTypeId: '2',
-        leaveType: mockLeaveTypes[1],
-        startDate: new Date('2026-01-20'),
-        endDate: new Date('2026-01-20'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 1,
-        reason: 'Feeling unwell',
-        status: 'approved',
-        approverId: 'manager1',
-        approverName: 'Alex Thompson',
-        approvedAt: new Date('2026-01-20'),
-        createdAt: new Date('2026-01-20'),
-        updatedAt: new Date('2026-01-20'),
-    },
-    {
-        id: '4',
-        employeeId: 'me',
-        employeeEmail: 'me@example.com',
-        employeeName: 'Me',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2025-12-23'),
-        endDate: new Date('2025-12-31'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 6,
-        reason: 'Christmas holidays',
-        status: 'approved',
-        approverId: 'manager1',
-        approverName: 'Alex Thompson',
-        approvedAt: new Date('2025-12-01'),
-        createdAt: new Date('2025-11-15'),
-        updatedAt: new Date('2025-12-01'),
-    },
-    {
-        id: '5',
-        employeeId: 'me',
-        employeeEmail: 'me@example.com',
-        employeeName: 'Me',
-        leaveTypeId: '3',
-        leaveType: mockLeaveTypes[2],
-        startDate: new Date('2026-02-20'),
-        endDate: new Date('2026-02-20'),
-        halfDayStart: true,
-        halfDayEnd: false,
-        totalDays: 0.5,
-        status: 'cancelled',
-        createdAt: new Date('2026-02-10'),
-        updatedAt: new Date('2026-02-12'),
-    },
-];
+import { useLeaveRequests, useLeaveTypes, useDeleteLeaveRequest } from '@/hooks';
+import { useUserStore } from '@/stores';
+import type { LeaveRequest, LeaveStatus } from '@/types';
 
 // Animation variants
 const container = {
@@ -138,15 +37,29 @@ function groupByYear(requests: LeaveRequest[]): Record<string, LeaveRequest[]> {
 }
 
 export default function MyRequests() {
+    const { user } = useUserStore();
+
+    // Fetch data using hooks
+    const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
+    const { data: requests, isLoading: requestsLoading } = useLeaveRequests({
+        employeeId: user?.id
+    });
+    const cancelMutation = useDeleteLeaveRequest();
+
     const [filterStatus, setFilterStatus] = useState<LeaveStatus | 'all'>('all');
     const [filterType, setFilterType] = useState<string>('all');
 
+    const isLoading = typesLoading || requestsLoading;
+
     // Filter requests
-    const filteredRequests = mockRequests.filter((r) => {
-        if (filterStatus !== 'all' && r.status !== filterStatus) return false;
-        if (filterType !== 'all' && r.leaveTypeId !== filterType) return false;
-        return true;
-    });
+    const filteredRequests = useMemo(() => {
+        if (!requests) return [];
+        return requests.filter((r) => {
+            if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+            if (filterType !== 'all' && r.leaveTypeId !== filterType) return false;
+            return true;
+        });
+    }, [requests, filterStatus, filterType]);
 
     // Group by year, sorted descending
     const groupedByYear = groupByYear(filteredRequests);
@@ -154,16 +67,27 @@ export default function MyRequests() {
 
     // Handle cancel
     const handleCancel = async (id: string) => {
-        console.log('Cancelling:', id);
-        // Would call API and update state
+        try {
+            await cancelMutation.mutateAsync(id);
+        } catch (error) {
+            console.error('Failed to cancel request:', error);
+        }
     };
 
     // Summary stats
-    const stats = {
-        pending: mockRequests.filter((r) => r.status === 'pending').length,
-        approved: mockRequests.filter((r) => r.status === 'approved').length,
-        total: mockRequests.reduce((sum, r) => sum + r.totalDays, 0),
-    };
+    const stats = useMemo(() => ({
+        pending: requests?.filter((r) => r.status === 'pending').length || 0,
+        approved: requests?.filter((r) => r.status === 'approved').length || 0,
+        total: requests?.reduce((sum, r) => sum + r.totalDays, 0) || 0,
+    }), [requests]);
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6">
@@ -200,7 +124,7 @@ export default function MyRequests() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Types</SelectItem>
-                            {mockLeaveTypes.map((type) => (
+                            {leaveTypes?.map((type) => (
                                 <SelectItem key={type.id} value={type.id}>
                                     <span className="flex items-center gap-2">
                                         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: type.color }} />
@@ -250,7 +174,7 @@ export default function MyRequests() {
                                 animate="show"
                             >
                                 {groupedByYear[year]
-                                    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+                                    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
                                     .map((request) => (
                                         <motion.div key={request.id} variants={item}>
                                             <LeaveRequestCard

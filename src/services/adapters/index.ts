@@ -2,6 +2,6 @@
 
 export type { DataSourceAdapter } from './DataSourceAdapter';
 
-// Re-export adapters when implemented
-// export { DataverseAdapter } from './DataverseAdapter';
+// Export adapters
+export { DataverseAdapter, dataverseAdapter } from './DataverseAdapter';
 // export { SharePointAdapter } from './SharePointAdapter';
