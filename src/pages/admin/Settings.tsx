@@ -13,9 +13,13 @@ import {
     CheckCircle2,
     Database,
     List,
+    CalendarDays,
+    Users,
 } from 'lucide-react';
 
 import LeaveTypesManager from '@/components/admin/LeaveTypesManager';
+import PublicHolidaysManager from '@/components/admin/PublicHolidaysManager';
+import BalanceOverridesManager from '@/components/admin/BalanceOverridesManager';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,7 +107,7 @@ export default function AdminSettings() {
                 onValueChange={setActiveTab}
                 className="space-y-8"
             >
-                <TabsList className="bg-muted/50 p-1 h-auto grid grid-cols-2 md:grid-cols-4 gap-2 rounded-xl">
+                <TabsList className="bg-muted/50 p-1 h-auto flex flex-wrap gap-2 rounded-xl">
                     <TabsTrigger value="general" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
                         <Globe className="h-4 w-4 mr-2" />
                         General
@@ -115,6 +119,14 @@ export default function AdminSettings() {
                     <TabsTrigger value="types" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
                         <List className="h-4 w-4 mr-2" />
                         Leave Types
+                    </TabsTrigger>
+                    <TabsTrigger value="holidays" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        Holidays
+                    </TabsTrigger>
+                    <TabsTrigger value="balances" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
+                        <Users className="h-4 w-4 mr-2" />
+                        Balances
                     </TabsTrigger>
                     <TabsTrigger value="approvals" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
                         <Shield className="h-4 w-4 mr-2" />
@@ -310,6 +322,30 @@ export default function AdminSettings() {
                         transition={{ duration: 0.3 }}
                     >
                         <LeaveTypesManager />
+                    </motion.div>
+                </TabsContent>
+
+                {/* Public Holidays Management */}
+                <TabsContent value="holidays" asChild>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeInUp}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <PublicHolidaysManager />
+                    </motion.div>
+                </TabsContent>
+
+                {/* Balance Overrides Management */}
+                <TabsContent value="balances" asChild>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeInUp}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <BalanceOverridesManager />
                     </motion.div>
                 </TabsContent>
 
