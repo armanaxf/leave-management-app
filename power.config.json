@@ -1,0 +1,13 @@
+{
+  "appId": "925a3e18-ce95-44db-844b-4e698795b898",
+  "appDisplayName": "Leave management",
+  "description": null,
+  "environmentId": "52ad460f-0b79-e4b8-beef-be71e358bca0",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "logoPath": "Default",
+  "localAppUrl": "http://localhost:3000/",
+  "region": "prod",
+  "connectionReferences": {},
+  "databaseReferences": {}
+}
