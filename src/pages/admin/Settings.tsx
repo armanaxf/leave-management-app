@@ -225,7 +225,7 @@ export default function AdminSettings() {
                                             <Label>Connected to</Label>
                                             <div className="font-medium text-sm flex items-center gap-2">
                                                 <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                                                Dataverse (Mock)
+                                                Dataverse
                                             </div>
                                         </div>
                                         <Button variant="outline" size="sm">Manage</Button>
