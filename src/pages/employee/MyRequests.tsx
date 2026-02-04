@@ -37,12 +37,12 @@ function groupByYear(requests: LeaveRequest[]): Record<string, LeaveRequest[]> {
 }
 
 export default function MyRequests() {
-    const { user } = useUserStore();
+    const { currentUser } = useUserStore();
 
     // Fetch data using hooks
     const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
     const { data: requests, isLoading: requestsLoading } = useLeaveRequests({
-        employeeId: user?.id
+        employeeId: currentUser?.id
     });
     const cancelMutation = useDeleteLeaveRequest();
 

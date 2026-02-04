@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { LeaveRequestCard } from '@/components/leave/LeaveRequestCard';
 import { useLeaveRequests, useLeaveTypes, useApproveLeaveRequest, useRejectLeaveRequest } from '@/hooks';
 import { useUserStore } from '@/stores';
-import type { LeaveRequest, ConflictSeverity } from '@/types';
+import type { LeaveRequest } from '@/types';
 
 // Container animation
 const container = {
@@ -30,7 +30,7 @@ const item = {
 };
 
 export default function Approvals() {
-    const { user } = useUserStore();
+    const { currentUser } = useUserStore();
 
     // Fetch data using hooks
     const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
@@ -68,13 +68,13 @@ export default function Approvals() {
 
     // Handle approve
     const handleApprove = async (id: string) => {
-        if (!user) return;
+        if (!currentUser) return;
         setProcessing(id);
         try {
             await approveMutation.mutateAsync({
                 id,
-                approverId: user.id,
-                approverName: user.displayName,
+                approverId: currentUser.id,
+                approverName: currentUser.displayName,
             });
         } catch (error) {
             console.error('Failed to approve request:', error);
@@ -90,13 +90,13 @@ export default function Approvals() {
     };
 
     const handleRejectConfirm = async () => {
-        if (!selectedRequest || !user) return;
+        if (!selectedRequest || !currentUser) return;
         setProcessing(selectedRequest.id);
         try {
             await rejectMutation.mutateAsync({
                 id: selectedRequest.id,
-                approverId: user.id,
-                approverName: user.displayName,
+                approverId: currentUser.id,
+                approverName: currentUser.displayName,
                 comments: rejectComment || undefined,
             });
             setRejectDialogOpen(false);

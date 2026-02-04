@@ -27,16 +27,16 @@ const item = {
 };
 
 export default function Dashboard() {
-    const { user } = useUserStore();
+    const { currentUser } = useUserStore();
     const currentYear = new Date().getFullYear();
 
     // Fetch data using TanStack Query hooks
     const { data: balances, isLoading: balancesLoading } = useLeaveBalances(
-        user?.id || '',
+        currentUser?.id || '',
         currentYear
     );
     const { data: requests, isLoading: requestsLoading } = useLeaveRequests({
-        employeeId: user?.id
+        employeeId: currentUser?.id
     });
     const cancelMutation = useDeleteLeaveRequest();
 

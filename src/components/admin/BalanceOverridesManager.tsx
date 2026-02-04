@@ -4,12 +4,9 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
-    Trash2,
     Edit2,
     Search,
     Loader2,
-    Check,
-    X,
     User,
     CalendarDays,
 } from 'lucide-react';
@@ -46,8 +43,9 @@ export default function BalanceOverridesManager() {
     const [formPending, setFormPending] = useState('');
     const [formCarriedOver, setFormCarriedOver] = useState('');
 
-    // Hooks
-    const { data: balances, isLoading } = useLeaveBalances();
+    // Hooks - For admin view, we fetch all balances (no specific employee)
+    // In a real app, this would be a paginated endpoint for all employees
+    const { data: balances, isLoading } = useLeaveBalances(undefined, selectedYear);
     const { data: leaveTypes } = useLeaveTypes();
     const createMutation = useCreateLeaveBalance();
     const updateMutation = useUpdateLeaveBalance();
@@ -98,7 +96,7 @@ export default function BalanceOverridesManager() {
         setFormEntitlement(balance.entitlement.toString());
         setFormUsed(balance.used.toString());
         setFormPending(balance.pending.toString());
-        setFormCarriedOver((balance.carriedOver || 0).toString());
+        setFormCarriedOver((balance.carryOver || 0).toString());
         setIsDialogOpen(true);
     };
 
@@ -114,7 +112,7 @@ export default function BalanceOverridesManager() {
             entitlement: Number(formEntitlement) || 0,
             used: Number(formUsed) || 0,
             pending: Number(formPending) || 0,
-            carriedOver: Number(formCarriedOver) || 0,
+            carryOver: Number(formCarriedOver) || 0,
         };
 
         try {
@@ -216,10 +214,10 @@ export default function BalanceOverridesManager() {
                                                                 <span>{balance.used} used</span>
                                                                 <span>•</span>
                                                                 <span>{balance.pending} pending</span>
-                                                                {balance.carriedOver ? (
+                                                                {balance.carryOver ? (
                                                                     <>
                                                                         <span>•</span>
-                                                                        <span>{balance.carriedOver} carried</span>
+                                                                        <span>{balance.carryOver} carried</span>
                                                                     </>
                                                                 ) : null}
                                                             </div>

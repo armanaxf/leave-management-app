@@ -10,7 +10,6 @@ import type {
     PublicHoliday,
     CreateLeaveRequest,
     LeaveRequestFilters,
-    AppSetting,
 } from '@/types';
 
 // ─────────────────────────────────────────────────────────────
@@ -242,11 +241,28 @@ export function useRejectLeaveRequest() {
 /**
  * Fetch leave balances for an employee
  */
-export function useLeaveBalances(employeeId: string, year: number) {
+export function useLeaveBalances(employeeId?: string, year?: number) {
     return useQuery({
-        queryKey: queryKeys.leaveBalances(employeeId, year),
-        queryFn: () => dataverseAdapter.getLeaveBalances(employeeId, year),
+        queryKey: queryKeys.leaveBalances(employeeId || '', year || 0),
+        queryFn: () => dataverseAdapter.getLeaveBalances(employeeId!, year!),
         enabled: !!employeeId && !!year,
+    });
+}
+
+/**
+ * Create a new leave balance (admin only)
+ */
+export function useCreateLeaveBalance() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (balance: Omit<LeaveBalance, 'id' | 'available'>) =>
+            dataverseAdapter.createLeaveBalance(balance),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({
+                queryKey: ['leaveBalances', data.employeeId]
+            });
+        },
     });
 }
 

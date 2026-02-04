@@ -25,6 +25,7 @@ export {
 
     // Leave Balances
     useLeaveBalances,
+    useCreateLeaveBalance,
     useUpdateLeaveBalance,
     useInitializeBalances,
 

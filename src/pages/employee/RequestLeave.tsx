@@ -89,7 +89,7 @@ function calculateWorkingDays(start: Date, end: Date, halfStart: boolean, halfEn
 
 export default function RequestLeave() {
     const navigate = useNavigate();
-    const { user } = useUserStore();
+    const { currentUser } = useUserStore();
 
     // Fetch leave types from Dataverse
     const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
@@ -124,7 +124,7 @@ export default function RequestLeave() {
 
     // Handle submit
     const handleSubmit = async () => {
-        if (!isValid || !user || !startDate || !endDate) return;
+        if (!isValid || !currentUser || !startDate || !endDate) return;
 
         try {
             await createRequest.mutateAsync({
@@ -136,7 +136,7 @@ export default function RequestLeave() {
                     halfDayEnd,
                     reason: reason || undefined,
                 },
-                employeeId: user.id,
+                employeeId: currentUser.id,
             });
 
             // Navigate to requests page on success

@@ -311,6 +311,27 @@ export class DataverseAdapter implements DataSourceAdapter {
         return mapLeaveBalance(result.data, leaveTypes);
     }
 
+    async createLeaveBalance(balance: Omit<LeaveBalance, 'id' | 'available'>): Promise<LeaveBalance> {
+        const leaveTypes = await this.getLeaveTypesCache();
+        const leaveType = leaveTypes.find(lt => lt.id === balance.leaveTypeId);
+
+        const result = await Lm_leavebalancesService.create({
+            lm_name: `${balance.employeeId}-${leaveType?.code || 'UNK'}-${balance.year}`,
+            lm_employeeid: balance.employeeId,
+            lm_year: balance.year.toString(),
+            lm_entitlement: balance.entitlement.toString(),
+            lm_used: balance.used.toString(),
+            lm_pending: balance.pending.toString(),
+            lm_carryover: balance.carryOver.toString(),
+            _lm_leavetype_value: balance.leaveTypeId,
+            ownerid: balance.employeeId,
+            owneridtype: 'systemuser',
+            statecode: 0,
+        } as any);
+
+        return mapLeaveBalance(result.data, leaveTypes);
+    }
+
     async initializeBalances(employeeId: string, year: number): Promise<LeaveBalance[]> {
         const leaveTypes = await this.getLeaveTypesCache();
         const activeTypes = leaveTypes.filter(lt => lt.isActive);

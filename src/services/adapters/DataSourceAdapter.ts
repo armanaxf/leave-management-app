@@ -62,6 +62,11 @@ export interface DataSourceAdapter {
     updateLeaveBalance(id: string, updates: Partial<LeaveBalance>): Promise<LeaveBalance>;
 
     /**
+     * Create a new leave balance (admin only)
+     */
+    createLeaveBalance(balance: Omit<LeaveBalance, 'id' | 'available'>): Promise<LeaveBalance>;
+
+    /**
      * Initialize balances for a new employee or year
      */
     initializeBalances(employeeId: string, year: number): Promise<LeaveBalance[]>;

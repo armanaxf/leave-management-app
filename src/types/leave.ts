@@ -56,7 +56,9 @@ export interface LeaveRequest {
 export interface LeaveBalance {
     id: string;
     employeeId: string;
+    employeeName?: string;
     leaveTypeId: string;
+    leaveTypeCode?: string;
     leaveType?: LeaveType;
     year: number;
     entitlement: number;
