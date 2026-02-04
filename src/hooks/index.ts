@@ -27,9 +27,7 @@ export {
     useLeaveBalances,
     useCreateLeaveBalance,
     useUpdateLeaveBalance,
-    useInitializeBalances,
 
-    // Public Holidays
     usePublicHolidays,
     useCreatePublicHoliday,
     useUpdatePublicHoliday,

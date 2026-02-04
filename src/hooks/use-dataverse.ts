@@ -371,7 +371,7 @@ export function useSettings() {
     return useQuery({
         queryKey: queryKeys.settings,
         queryFn: () => dataverseAdapter.getSettings(),
-        staleTime: 10 * 60 * 1000, // 10 minutes
+        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
 
@@ -382,8 +382,8 @@ export function useUpdateSetting() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ key, value }: { key: string; value: string }) =>
-            dataverseAdapter.updateSetting(key, value),
+        mutationFn: ({ key, value }: { key: string; value: string | number | boolean }) =>
+            dataverseAdapter.updateSetting(key, String(value)),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.settings });
         },

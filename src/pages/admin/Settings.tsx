@@ -21,6 +21,9 @@ import LeaveTypesManager from '@/components/admin/LeaveTypesManager';
 import PublicHolidaysManager from '@/components/admin/PublicHolidaysManager';
 import BalanceOverridesManager from '@/components/admin/BalanceOverridesManager';
 
+import { useSettings, useUpdateSetting } from '@/hooks';
+import { useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,16 +47,58 @@ import { DEFAULT_SETTINGS, type AppSettings } from '@/types/settings';
 import { cn } from '@/lib/utils';
 
 export default function AdminSettings() {
+    const { data: remoteSettings, isLoading: isLoadingSettings } = useSettings();
+    const { mutateAsync: saveSetting } = useUpdateSetting();
+
     const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('general');
 
+    // Load settings from server
+    useEffect(() => {
+        if (remoteSettings && remoteSettings.length > 0) {
+            const newSettings = { ...DEFAULT_SETTINGS };
+
+            remoteSettings.forEach(setting => {
+                const key = setting.key as keyof AppSettings;
+                if (key in newSettings) {
+                    // Parse value based on default type
+                    const defaultVal = DEFAULT_SETTINGS[key];
+                    if (typeof defaultVal === 'boolean') {
+                        // @ts-ignore
+                        newSettings[key] = setting.value === 'true';
+                    } else if (typeof defaultVal === 'number') {
+                        // @ts-ignore
+                        newSettings[key] = parseFloat(setting.value);
+                    } else {
+                        // @ts-ignore
+                        newSettings[key] = setting.value;
+                    }
+                }
+            });
+
+            setSettings(newSettings);
+        }
+    }, [remoteSettings]);
+
     const handleSave = async () => {
         setIsSaving(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsSaving(false);
-        // In a real app, this would show a toast
+        try {
+            // Save all settings
+            const promises = Object.entries(settings).map(([key, value]) => {
+                return saveSetting({
+                    key,
+                    value: String(value)
+                });
+            });
+
+            await Promise.all(promises);
+            // In a real app we'd show a toast here
+        } catch (error) {
+            console.error('Failed to save settings', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -224,11 +269,11 @@ export default function AdminSettings() {
                                         <div className="space-y-0.5">
                                             <Label>Connected to</Label>
                                             <div className="font-medium text-sm flex items-center gap-2">
-                                                <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                                                <div className={cn("h-2 w-2 rounded-full animate-pulse", isLoadingSettings ? "bg-yellow-500" : "bg-success")} />
                                                 Dataverse
                                             </div>
                                         </div>
-                                        <Button variant="outline" size="sm">Manage</Button>
+                                        {/* Manage button removed as it was non-functional */}
                                     </div>
                                 </CardContent>
                             </Card>
