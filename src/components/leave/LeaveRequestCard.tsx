@@ -98,7 +98,7 @@ export function LeaveRequestCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                'group relative rounded-lg border bg-card p-4 shadow-sm transition-all',
+                'group relative rounded-lg border bg-card p-4 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20',
                 onClick && 'cursor-pointer hover:shadow-md hover:border-primary/20',
                 // Add border highlight for conflicts
                 conflictSeverity === 'high' && 'border-destructive/40',
@@ -106,6 +106,14 @@ export function LeaveRequestCard({
                 className
             )}
             onClick={() => onClick?.(request)}
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onClick(request);
+                }
+            }}
         >
             {/* Leave type color bar */}
             <div
@@ -232,7 +240,7 @@ export function LeaveRequestCard({
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
                                     onClick={(e) => e.stopPropagation()}
                                     aria-label="More options"
                                 >

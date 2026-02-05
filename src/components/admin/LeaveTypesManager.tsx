@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,13 +30,22 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { mockLeaveTypes } from '@/lib/mockData';
 import type { LeaveType } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+    useLeaveTypes,
+    useCreateLeaveType,
+    useUpdateLeaveType,
+    useDeleteLeaveType
+} from '@/hooks';
 
 export default function LeaveTypesManager() {
-    const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>(mockLeaveTypes);
+    const { data: leaveTypes = [], isLoading } = useLeaveTypes();
+    const createMutation = useCreateLeaveType();
+    const updateMutation = useUpdateLeaveType();
+    const deleteMutation = useDeleteLeaveType();
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingType, setEditingType] = useState<Partial<LeaveType> | null>(null);
 
@@ -62,33 +71,44 @@ export default function LeaveTypesManager() {
         setIsDialogOpen(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!editingType?.name || !editingType.code) {
             toast.error('Name and Code are required');
             return;
         }
 
-        if (editingType.id) {
-            // Update existing
-            setLeaveTypes(prev => prev.map(t => t.id === editingType.id ? { ...t, ...editingType } as LeaveType : t));
-            toast.success('Leave type updated');
-        } else {
-            // Create new
-            const newType = {
-                ...editingType,
-                id: Math.random().toString(36).substr(2, 9),
-            } as LeaveType;
-            setLeaveTypes(prev => [...prev, newType]);
-            toast.success('Leave type created');
+        try {
+            if (editingType.id) {
+                // Update existing
+                await updateMutation.mutateAsync({
+                    id: editingType.id,
+                    updates: editingType
+                });
+                toast.success('Leave type updated');
+            } else {
+                // Create new
+                await createMutation.mutateAsync(editingType as Omit<LeaveType, 'id'>);
+                toast.success('Leave type created');
+            }
+            setIsDialogOpen(false);
+            setEditingType(null);
+        } catch (error) {
+            console.error('Failed to save leave type:', error);
+            toast.error('Failed to save leave type');
         }
-        setIsDialogOpen(false);
-        setEditingType(null);
     };
 
-    const handleDelete = (id: string) => {
-        setLeaveTypes(prev => prev.filter(t => t.id !== id));
-        toast.success('Leave type deleted');
-        setIsDialogOpen(false); // Close dialog if open (e.g. if we add delete to dialog)
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this leave type?')) return;
+
+        try {
+            await deleteMutation.mutateAsync(id);
+            toast.success('Leave type deleted');
+            setIsDialogOpen(false);
+        } catch (error) {
+            console.error('Failed to delete leave type:', error);
+            toast.error('Failed to delete leave type');
+        }
     };
 
     // Helper to render dynamic icon
@@ -98,6 +118,10 @@ export default function LeaveTypesManager() {
         const IconComponent = (Icons as any)[capitalized] || Icons.Circle; // Fallback
         return <IconComponent className={className} />;
     };
+
+    if (isLoading) {
+        return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>;
+    }
 
     const getIconValue = () => {
         if (!editingType?.icon) return 'Circle';

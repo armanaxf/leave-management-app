@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Mail, Grid, List as ListIcon, MoreHorizontal, Calendar, Briefcase, User } from 'lucide-react';
+import { Search, Mail, Grid, List as ListIcon, MoreHorizontal, Calendar, Briefcase, User, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,20 +22,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/layout/UserAvatar';
 import { Badge } from '@/components/ui/badge';
+import { useTeamMembers } from '@/hooks';
 
 import { format } from 'date-fns';
 
-import { mockTeamMembers } from '@/lib/mockData';
-
 export default function TeamOverview() {
+    const { data: teamMembers = [], isLoading } = useTeamMembers();
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
     // Filter team members
-    const filteredMembers = mockTeamMembers.filter(member =>
-        member.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredMembers = teamMembers.filter(member =>
+        member.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (member.jobTitle && member.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const container = {
@@ -51,6 +51,14 @@ export default function TeamOverview() {
         show: { opacity: 1, y: 0 },
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
     return (
         <div className="flex-1 space-y-8 p-6 max-w-7xl mx-auto">
             {/* Header */}
@@ -59,7 +67,7 @@ export default function TeamOverview() {
                     Team Overview
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                    Manage your direct reports (`{mockTeamMembers.length}`)
+                    Manage your direct reports ({teamMembers.length})
                 </p>
             </div>
 
@@ -78,8 +86,8 @@ export default function TeamOverview() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{mockTeamMembers.length}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Across 3 departments</p>
+                            <div className="text-3xl font-bold">{teamMembers.length}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Direct Reports</p>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -98,10 +106,10 @@ export default function TeamOverview() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-foreground">
-                                {mockTeamMembers.filter(m => m.currentStatus === 'on-leave').length}
+                                {teamMembers.filter(m => m.currentStatus === 'on-leave').length}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {mockTeamMembers.filter(m => m.currentStatus === 'on-leave').length > 0 ? 'Requires coverage' : 'Full team attendance'}
+                                {teamMembers.filter(m => m.currentStatus === 'on-leave').length > 0 ? 'Requires coverage' : 'Full team attendance'}
                             </p>
                         </CardContent>
                     </Card>
@@ -136,6 +144,7 @@ export default function TeamOverview() {
                         className="pl-9 h-10 bg-background/50 border-input transition-all focus:bg-background focus:ring-2 focus:ring-primary/20"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        aria-label="Search team members"
                     />
                 </div>
 
@@ -145,6 +154,7 @@ export default function TeamOverview() {
                         size="sm"
                         onClick={() => setViewMode('grid')}
                         className="h-8 w-8 p-0"
+                        aria-label="Grid view"
                     >
                         <Grid className="h-4 w-4" />
                     </Button>
@@ -153,6 +163,7 @@ export default function TeamOverview() {
                         size="sm"
                         onClick={() => setViewMode('list')}
                         className="h-8 w-8 p-0"
+                        aria-label="List view"
                     >
                         <ListIcon className="h-4 w-4" />
                     </Button>
@@ -177,7 +188,7 @@ export default function TeamOverview() {
                                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Actions">
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -293,11 +304,11 @@ export default function TeamOverview() {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Email ${member.displayName}`}>
                                                         <Mail className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </div>

@@ -55,16 +55,20 @@ export function UserAvatar({
             </Avatar>
 
             {showStatus && (
-                <span
-                    className={cn(
-                        "absolute bottom-0 right-0 block rounded-full ring-2 ring-background",
-                        statusColors[status],
-                        size === "xs" ? "h-1.5 w-1.5" :
-                            size === "sm" ? "h-2 w-2" :
-                                size === "default" ? "h-3 w-3" :
-                                    "h-3.5 w-3.5"
-                    )}
-                />
+                <>
+                    <span
+                        className={cn(
+                            "absolute bottom-0 right-0 block rounded-full ring-2 ring-background",
+                            statusColors[status],
+                            size === "xs" ? "h-1.5 w-1.5" :
+                                size === "sm" ? "h-2 w-2" :
+                                    size === "default" ? "h-3 w-3" :
+                                        "h-3.5 w-3.5"
+                        )}
+                        aria-hidden="true"
+                    />
+                    <span className="sr-only">Status: {status}</span>
+                </>
             )}
         </div>
     )

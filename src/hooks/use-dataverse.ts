@@ -32,7 +32,23 @@ export const queryKeys = {
 
     // Settings
     settings: ['settings'] as const,
+    teamMembers: ['teamMembers'] as const,
 };
+
+// ─────────────────────────────────────────────────────────────
+// User Hooks
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetch team members (direct reports)
+ */
+export function useTeamMembers() {
+    return useQuery({
+        queryKey: queryKeys.teamMembers,
+        queryFn: () => dataverseAdapter.getTeamMembers(),
+        staleTime: 5 * 60 * 1000,
+    });
+}
 
 // ─────────────────────────────────────────────────────────────
 // Leave Types Hooks

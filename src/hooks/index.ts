@@ -40,4 +40,5 @@ export {
     // Composite
     useEmployeeDashboard,
     usePendingApprovals,
+    useTeamMembers,
 } from './use-dataverse';

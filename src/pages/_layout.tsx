@@ -2,11 +2,16 @@ import { Outlet, NavLink } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Palmtree } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
+import { useSettings } from "@/hooks"
 
 type LayoutProps = { showHeader?: boolean }
 
 export default function Layout({ showHeader = true }: LayoutProps) {
   const { isAdmin } = useUserStore()
+  const { data: settings } = useSettings()
+
+  const appName = settings?.find(s => s.key === 'appName')?.value || "Leave Manager"
+
   return (
     <div className="min-h-dvh flex flex-col bg-background">
       {/* Header - Always visible */}
@@ -16,7 +21,7 @@ export default function Layout({ showHeader = true }: LayoutProps) {
           <div className="flex items-center gap-6">
             <NavLink to="/" className="flex items-center gap-2 font-display font-semibold text-foreground">
               <Palmtree className="h-5 w-5 text-primary" />
-              <span>Leave Manager</span>
+              <span>{appName}</span>
             </NavLink>
 
             {showHeader && (

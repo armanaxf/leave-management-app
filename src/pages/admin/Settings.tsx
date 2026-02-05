@@ -1,4 +1,5 @@
 // Leave Management App - Admin Settings Page
+// VERSION CHECK: 2.1 - DEPLOYED WITH TOASTS
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -23,6 +24,7 @@ import BalanceOverridesManager from '@/components/admin/BalanceOverridesManager'
 
 import { useSettings, useUpdateSetting } from '@/hooks';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,9 +95,14 @@ export default function AdminSettings() {
             });
 
             await Promise.all(promises);
-            // In a real app we'd show a toast here
+            toast.success('Settings saved successfully', {
+                description: 'All changes have been persisted to Dataverse.'
+            });
         } catch (error) {
             console.error('Failed to save settings', error);
+            toast.error('Failed to save settings', {
+                description: 'Please check your connection and try again.'
+            });
         } finally {
             setIsSaving(false);
         }
@@ -273,7 +280,16 @@ export default function AdminSettings() {
                                                 Dataverse
                                             </div>
                                         </div>
-                                        {/* Manage button removed as it was non-functional */}
+                                        {/* Manage button restored for future extensibility (SQL/SharePoint) */}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => toast.info('Data Source Management', {
+                                                description: 'Support for SQL and SharePoint connections is coming in a future update.'
+                                            })}
+                                        >
+                                            Manage
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>

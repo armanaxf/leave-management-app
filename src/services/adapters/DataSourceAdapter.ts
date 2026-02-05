@@ -8,6 +8,8 @@ import type {
     CreateLeaveRequest,
     LeaveRequestFilters,
     AppSetting,
+    CurrentUser,
+    TeamMember,
 } from '@/types';
 
 /**
@@ -17,6 +19,16 @@ import type {
 export interface DataSourceAdapter {
     /** Adapter identifier */
     readonly name: string;
+
+    /**
+     * Get the current authenticated user
+     */
+    getCurrentUser(): Promise<CurrentUser | null>;
+
+    /**
+     * Get team members (direct reports) for the current user
+     */
+    getTeamMembers(): Promise<TeamMember[]>;
 
     // ─────────────────────────────────────────────────────────────
     // Leave Requests
