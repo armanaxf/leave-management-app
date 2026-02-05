@@ -1,5 +1,6 @@
 // Leave Management App - Dataverse Adapter
 // Implements DataSourceAdapter using generated PAC CLI services
+// Uses O365 connector for user operations instead of systemuser table
 
 import type { DataSourceAdapter } from './DataSourceAdapter';
 import type {
@@ -17,7 +18,7 @@ import type {
 
 import { getClient } from '@microsoft/power-apps/data';
 import { dataSourcesInfo } from '../../../.power/schemas/appschemas/dataSourcesInfo';
-import { mockTeamMembers } from '@/lib/mockData';
+import { office365Service } from '../Office365Service';
 
 // Import generated services
 import { Lm_leavetypesService } from '@/generated/services/Lm_leavetypesService';
@@ -171,66 +172,88 @@ export class DataverseAdapter implements DataSourceAdapter {
     }
 
     async getCurrentUser(): Promise<CurrentUser | null> {
-        // 1. Try to get context from Xrm (Power Apps environment)
+        // Initialize O365 service if not already done
+        await office365Service.initialize();
+
+        // Get admin emails from settings to check admin status
+        const adminEmails = await this.getAdminEmails();
+
+        // Try O365 connector first (preferred method)
+        if (office365Service.isAvailable()) {
+            try {
+                const currentUser = await office365Service.getCurrentUser(adminEmails);
+                if (currentUser) {
+                    return currentUser;
+                }
+            } catch (error) {
+                console.warn('O365 connector failed, falling back to Xrm context', error);
+            }
+        }
+
+        // Fallback: Try to get context from Xrm (Power Apps environment)
         const xrm = (window as any).Xrm;
         const globalContext = xrm?.Utility?.getGlobalContext();
 
         // Clean ID: removing braces if present
         const userId = globalContext?.userSettings?.userId?.replace(/[{}]/g, '').toLowerCase();
         const userName = globalContext?.userSettings?.userName;
+        const userEmail = globalContext?.userSettings?.userEmail || '';
 
         if (userId) {
-            try {
-                // Try to fetch detailed user info from systemuser table
-                const client = getClient(dataSourcesInfo);
-                const result = await client.retrieveRecordAsync<any>('systemuser', userId, {
-                    select: ['firstname', 'lastname', 'internalemailaddress', 'jobtitle', 'address1_city']
-                    // Note: 'address1_city' is often used for department or office in default mapping if department not available
-                });
+            // Check if user is admin
+            const isAdmin = adminEmails.some(
+                email => email.toLowerCase() === userEmail.toLowerCase()
+            );
 
-                if (result.data) {
-                    return {
-                        id: userId,
-                        displayName: result.data.fullname || userName || 'User',
-                        email: result.data.internalemailaddress || '',
-                        firstName: result.data.firstname,
-                        lastName: result.data.lastname,
-                        jobTitle: result.data.jobtitle,
-                        department: result.data.address1_city, // Fallback or mapping
-                        isManager: false, // Pending role check
-                        isAdmin: false,   // Pending role check
-                        roles: ['employee'], // Default
-                        directReports: [],   // Pending team check
-                        teamMembers: []      // Pending team fetch
-                    };
+            // Get direct reports using O365 if available
+            let directReports: TeamMember[] = [];
+            let isManager = false;
+
+            if (office365Service.isAvailable() && userEmail) {
+                try {
+                    directReports = await office365Service.getTeamMembers(userEmail);
+                    isManager = directReports.length > 0;
+                } catch (error) {
+                    console.warn('Failed to fetch direct reports from O365', error);
                 }
-            } catch (error) {
-                console.warn('Failed to fetch systemuser details, falling back to basic context', error);
             }
 
-            // Basic fallback from Xrm
+            // Build roles array
+            const roles: ('employee' | 'manager' | 'admin')[] = ['employee'];
+            if (isManager) roles.push('manager');
+            if (isAdmin) roles.push('admin');
+
             return {
                 id: userId,
                 displayName: userName || 'Power Apps User',
-                email: '',
-                isManager: false,
-                isAdmin: false,
-                roles: ['employee'],
-                directReports: [],
-                teamMembers: []
+                email: userEmail,
+                isManager,
+                isAdmin,
+                roles,
+                directReports,
+                teamMembers: directReports,
             };
         }
 
-        // 2. Fallback for Local Dev (when not in Power Apps)
-        console.log('No Dataverse context found (Xrm). Using mock user for local dev.');
-        // Use the first mock user (Alice Admin) but ensure roles are set
-        const mockUser = mockTeamMembers[0];
-        return {
-            ...mockUser,
-            roles: ['admin', 'manager', 'employee'],
-            directReports: [],
-            teamMembers: []
-        };
+        // No context available - user must authenticate
+        console.error('No user context available. Please ensure you are signed in to Power Apps.');
+        return null;
+    }
+
+    /**
+     * Get list of admin emails from settings
+     */
+    private async getAdminEmails(): Promise<string[]> {
+        try {
+            const settings = await this.getSettings();
+            const adminSetting = settings.find(s => s.key === 'adminEmails');
+            if (adminSetting?.value) {
+                return JSON.parse(adminSetting.value);
+            }
+        } catch (error) {
+            console.warn('Failed to fetch admin emails:', error);
+        }
+        return [];
     }
 
     async getTeamMembers(): Promise<TeamMember[]> {
@@ -238,32 +261,66 @@ export class DataverseAdapter implements DataSourceAdapter {
             const currentUser = await this.getCurrentUser();
             if (!currentUser) return [];
 
-            const client = getClient(dataSourcesInfo);
-            // Query for users where manager (parentsystemuserid) is the current user
-            const result = await client.retrieveMultipleRecordsAsync<any>('systemuser', {
-                filter: `_parentsystemuserid_value eq '${currentUser.id}'`,
-                select: ['systemuserid', 'fullname', 'internalemailaddress', 'jobtitle', 'address1_city']
-            });
+            // Use O365 connector if available (preferred)
+            if (office365Service.isAvailable() && currentUser.email) {
+                try {
+                    const teamMembers = await office365Service.getTeamMembers(currentUser.email);
 
-            if (result.data) {
-                return (result.data as any[]).map((u: any) => ({
-                    id: u.systemuserid,
-                    displayName: u.fullname || 'Unknown',
-                    email: u.internalemailaddress || '',
-                    firstName: u.firstname,
-                    lastName: u.lastname,
-                    jobTitle: u.jobtitle,
-                    department: u.address1_city,
-                    isManager: false,
-                    isAdmin: false,
-                    roles: ['employee'],
-                    currentStatus: 'available', // TODO: Fetch status from leave requests
+                    // Enrich with leave status from Dataverse
+                    const enrichedMembers = await Promise.all(
+                        teamMembers.map(async (member) => {
+                            const status = await this.getMemberLeaveStatus(member.id);
+                            return {
+                                ...member,
+                                currentStatus: status,
+                            };
+                        })
+                    );
+
+                    return enrichedMembers;
+                } catch (error) {
+                    console.warn('O365 team members fetch failed', error);
+                }
+            }
+
+            // Return cached team members from currentUser if available
+            if (currentUser.teamMembers && currentUser.teamMembers.length > 0) {
+                return currentUser.teamMembers.map(m => ({
+                    ...m,
+                    currentStatus: 'available' as const,
                 }));
             }
+
             return [];
         } catch (error) {
             console.warn('Failed to fetch team members:', error);
             return [];
+        }
+    }
+
+    /**
+     * Get leave status for a team member
+     */
+    private async getMemberLeaveStatus(employeeId: string): Promise<'available' | 'on-leave' | 'pending-leave'> {
+        try {
+            const today = new Date();
+            const requests = await this.getLeaveRequests({ employeeId });
+
+            // Check if currently on approved leave
+            const onLeave = requests.some(r =>
+                r.status === 'approved' &&
+                new Date(r.startDate) <= today &&
+                new Date(r.endDate) >= today
+            );
+            if (onLeave) return 'on-leave';
+
+            // Check if has pending leave
+            const hasPending = requests.some(r => r.status === 'pending');
+            if (hasPending) return 'pending-leave';
+
+            return 'available';
+        } catch {
+            return 'available';
         }
     }
 
@@ -599,6 +656,35 @@ export class DataverseAdapter implements DataSourceAdapter {
 
     async deletePublicHoliday(id: string): Promise<void> {
         await Lm_publicholidaiesService.delete(id);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // User Search (for admin management)
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Search for users using O365 connector
+     */
+    async searchUsers(searchTerm: string, top: number = 10): Promise<{ id: string; email: string; displayName: string }[]> {
+        if (!office365Service.isAvailable()) {
+            await office365Service.initialize();
+        }
+
+        if (office365Service.isAvailable()) {
+            try {
+                const users = await office365Service.searchUsers(searchTerm, top);
+                return users.map(u => ({
+                    id: u.id,
+                    email: u.email,
+                    displayName: u.displayName,
+                }));
+            } catch (error) {
+                console.warn('O365 user search failed:', error);
+            }
+        }
+
+        // Return empty if O365 not available
+        return [];
     }
 }
 

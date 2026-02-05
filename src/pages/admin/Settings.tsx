@@ -1,5 +1,5 @@
 // Leave Management App - Admin Settings Page
-// VERSION CHECK: 2.1 - DEPLOYED WITH TOASTS
+// VERSION CHECK: 2.2 - WITH BRANDING AND ADMIN MANAGEMENT
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -16,11 +16,15 @@ import {
     List,
     CalendarDays,
     Users,
+    Palette,
+    UserCog,
 } from 'lucide-react';
 
 import LeaveTypesManager from '@/components/admin/LeaveTypesManager';
 import PublicHolidaysManager from '@/components/admin/PublicHolidaysManager';
 import BalanceOverridesManager from '@/components/admin/BalanceOverridesManager';
+import BrandingManager from '@/components/admin/BrandingManager';
+import AdminsManager from '@/components/admin/AdminsManager';
 
 import { useSettings, useUpdateSetting } from '@/hooks';
 import { useEffect } from 'react';
@@ -161,31 +165,39 @@ export default function AdminSettings() {
             >
                 <TabsList className="bg-muted/50 p-1 h-auto flex flex-wrap gap-2 rounded-xl">
                     <TabsTrigger value="general" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <Globe className="h-4 w-4 mr-2" />
+                        <Globe className="h-4 w-4 mr-2" aria-hidden="true" />
                         General
                     </TabsTrigger>
+                    <TabsTrigger value="branding" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
+                        <Palette className="h-4 w-4 mr-2" aria-hidden="true" />
+                        Branding
+                    </TabsTrigger>
                     <TabsTrigger value="policy" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <Calendar className="h-4 w-4 mr-2" />
+                        <Calendar className="h-4 w-4 mr-2" aria-hidden="true" />
                         Leave Policy
                     </TabsTrigger>
                     <TabsTrigger value="types" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <List className="h-4 w-4 mr-2" />
+                        <List className="h-4 w-4 mr-2" aria-hidden="true" />
                         Leave Types
                     </TabsTrigger>
                     <TabsTrigger value="holidays" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <CalendarDays className="h-4 w-4 mr-2" />
+                        <CalendarDays className="h-4 w-4 mr-2" aria-hidden="true" />
                         Holidays
                     </TabsTrigger>
                     <TabsTrigger value="balances" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <Users className="h-4 w-4 mr-2" />
+                        <Users className="h-4 w-4 mr-2" aria-hidden="true" />
                         Balances
                     </TabsTrigger>
                     <TabsTrigger value="approvals" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <Shield className="h-4 w-4 mr-2" />
+                        <Shield className="h-4 w-4 mr-2" aria-hidden="true" />
                         Approvals
                     </TabsTrigger>
+                    <TabsTrigger value="admins" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
+                        <UserCog className="h-4 w-4 mr-2" aria-hidden="true" />
+                        Admins
+                    </TabsTrigger>
                     <TabsTrigger value="intelligence" className="py-2.5 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all">
-                        <BrainCircuit className="h-4 w-4 mr-2" />
+                        <BrainCircuit className="h-4 w-4 mr-2" aria-hidden="true" />
                         Intelligence
                     </TabsTrigger>
                 </TabsList>
@@ -294,6 +306,25 @@ export default function AdminSettings() {
                                 </CardContent>
                             </Card>
                         </div>
+                    </motion.div>
+                </TabsContent>
+
+                {/* Branding Settings */}
+                <TabsContent value="branding" asChild>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeInUp}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <BrandingManager
+                            headerIcon={settings.headerIcon}
+                            headerIconFileName={settings.headerIconFileName}
+                            onIconChange={(icon, fileName) => {
+                                updateSetting('headerIcon', icon);
+                                updateSetting('headerIconFileName', fileName);
+                            }}
+                        />
                     </motion.div>
                 </TabsContent>
 
@@ -484,6 +515,21 @@ export default function AdminSettings() {
                                 </Card>
                             </div>
                         </div>
+                    </motion.div>
+                </TabsContent>
+
+                {/* Admin Management */}
+                <TabsContent value="admins" asChild>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeInUp}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <AdminsManager
+                            adminEmails={settings.adminEmails}
+                            onAdminsChange={(adminsJson) => updateSetting('adminEmails', adminsJson)}
+                        />
                     </motion.div>
                 </TabsContent>
 

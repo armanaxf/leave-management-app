@@ -199,52 +199,52 @@ export function LeaveRequestCard({
                         {status.label}
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - 44x44px touch targets for WCAG 2.5.5 */}
                     {showActions && request.status === 'pending' && (
                         <div className="flex items-center gap-1">
                             {onApprove && (
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 text-success hover:text-success hover:bg-success/10"
+                                    className="h-11 w-11 p-0 text-success hover:text-success hover:bg-success/10"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onApprove(request.id);
                                     }}
                                     aria-label="Approve request"
                                 >
-                                    <Check className="h-4 w-4" />
+                                    <Check className="h-5 w-5" aria-hidden="true" />
                                 </Button>
                             )}
                             {onReject && (
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="h-11 w-11 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onReject(request.id);
                                     }}
                                     aria-label="Reject request"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-5 w-5" aria-hidden="true" />
                                 </Button>
                             )}
                         </div>
                     )}
 
-                    {/* More actions menu for own requests */}
+                    {/* More actions menu for own requests - visible on focus for keyboard users */}
                     {!showActions && request.status === 'pending' && onCancel && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                                    className="h-11 w-11 p-0 opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 transition-opacity"
                                     onClick={(e) => e.stopPropagation()}
                                     aria-label="More options"
                                 >
-                                    <MoreHorizontal className="h-4 w-4" />
+                                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">

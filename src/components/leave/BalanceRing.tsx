@@ -57,6 +57,9 @@ export function BalanceRing({
     // Available days
     const available = Math.max(0, total - used - pending);
 
+    // Build accessible description
+    const accessibleLabel = `Leave balance: ${available} days available out of ${total} total. ${used} days used${pending > 0 ? `, ${pending} days pending approval` : ''}.`;
+
     return (
         <div
             className={cn(
@@ -64,12 +67,15 @@ export function BalanceRing({
                 className
             )}
             style={{ width: size, height: size }}
+            role="img"
+            aria-label={accessibleLabel}
         >
             <svg
                 width={size}
                 height={size}
                 viewBox={`0 0 ${size} ${size}`}
                 className="transform -rotate-90"
+                aria-hidden="true"
             >
                 {/* Background circle */}
                 <circle

@@ -201,7 +201,7 @@ export default function RequestLeave() {
                         <div className="grid gap-4 sm:grid-cols-2">
                             {/* Start Date */}
                             <div className="space-y-2">
-                                <Label>Start Date</Label>
+                                <Label id="startDateLabel">Start Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -210,8 +210,9 @@ export default function RequestLeave() {
                                                 'w-full justify-start text-left font-normal',
                                                 !startDate && 'text-muted-foreground'
                                             )}
+                                            aria-labelledby="startDateLabel"
                                         >
-                                            <CalendarDays className="mr-2 h-4 w-4" />
+                                            <CalendarDays className="mr-2 h-4 w-4" aria-hidden="true" />
                                             {startDate ? format(startDate, 'EEE, d MMM yyyy') : 'Select date'}
                                         </Button>
                                     </PopoverTrigger>
@@ -249,7 +250,7 @@ export default function RequestLeave() {
 
                             {/* End Date */}
                             <div className="space-y-2">
-                                <Label>End Date</Label>
+                                <Label id="endDateLabel">End Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -258,8 +259,9 @@ export default function RequestLeave() {
                                                 'w-full justify-start text-left font-normal',
                                                 !endDate && 'text-muted-foreground'
                                             )}
+                                            aria-labelledby="endDateLabel"
                                         >
-                                            <CalendarDays className="mr-2 h-4 w-4" />
+                                            <CalendarDays className="mr-2 h-4 w-4" aria-hidden="true" />
                                             {endDate ? format(endDate, 'EEE, d MMM yyyy') : 'Select date'}
                                         </Button>
                                     </PopoverTrigger>

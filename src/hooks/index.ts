@@ -2,6 +2,7 @@
 // Re-exports all custom hooks
 
 export { useTheme } from './use-theme';
+export { useDebounce } from './use-debounce';
 
 // Dataverse hooks
 export {
