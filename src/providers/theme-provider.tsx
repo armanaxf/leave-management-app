@@ -26,9 +26,14 @@ export function ThemeProvider({
   storageKey = "app-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      return (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    } catch {
+      // localStorage may be unavailable in sandboxed iframes (e.g. Power Apps)
+      return defaultTheme
+    }
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -51,7 +56,11 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
+      try {
+        localStorage.setItem(storageKey, theme)
+      } catch {
+        // localStorage may be unavailable in sandboxed iframes
+      }
       setTheme(theme)
     },
   }

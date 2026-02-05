@@ -173,42 +173,51 @@ export class DataverseAdapter implements DataSourceAdapter {
     async getCurrentUser(): Promise<CurrentUser | null> {
         // 1. Try to get context from Xrm (Power Apps environment)
         const xrm = (window as any).Xrm;
-        const globalContext = xrm?.Utility?.getGlobalContext();
+
+        let globalContext: any;
+        try {
+            globalContext = xrm?.Utility?.getGlobalContext();
+        } catch (error) {
+            console.warn('Failed to get Xrm global context:', error);
+        }
 
         // Clean ID: removing braces if present
         const userId = globalContext?.userSettings?.userId?.replace(/[{}]/g, '').toLowerCase();
         const userName = globalContext?.userSettings?.userName;
 
         if (userId) {
-            try {
-                // Try to fetch detailed user info from systemuser table
-                const client = getClient(dataSourcesInfo);
-                const result = await client.retrieveRecordAsync<any>('systemuser', userId, {
-                    select: ['firstname', 'lastname', 'internalemailaddress', 'jobtitle', 'address1_city']
-                    // Note: 'address1_city' is often used for department or office in default mapping if department not available
-                });
+            // Use Xrm.WebApi for systemuser queries — systemuser is a system table
+            // not registered in dataSourcesInfo, so getClient() cannot access it
+            if (xrm?.WebApi) {
+                try {
+                    const result = await xrm.WebApi.retrieveRecord(
+                        'systemuser',
+                        userId,
+                        '?$select=fullname,firstname,lastname,internalemailaddress,jobtitle,address1_city'
+                    );
 
-                if (result.data) {
-                    return {
-                        id: userId,
-                        displayName: result.data.fullname || userName || 'User',
-                        email: result.data.internalemailaddress || '',
-                        firstName: result.data.firstname,
-                        lastName: result.data.lastname,
-                        jobTitle: result.data.jobtitle,
-                        department: result.data.address1_city, // Fallback or mapping
-                        isManager: false, // Pending role check
-                        isAdmin: false,   // Pending role check
-                        roles: ['employee'], // Default
-                        directReports: [],   // Pending team check
-                        teamMembers: []      // Pending team fetch
-                    };
+                    if (result) {
+                        return {
+                            id: userId,
+                            displayName: result.fullname || userName || 'User',
+                            email: result.internalemailaddress || '',
+                            firstName: result.firstname,
+                            lastName: result.lastname,
+                            jobTitle: result.jobtitle,
+                            department: result.address1_city,
+                            isManager: false,
+                            isAdmin: false,
+                            roles: ['employee'],
+                            directReports: [],
+                            teamMembers: []
+                        };
+                    }
+                } catch (error) {
+                    console.warn('Failed to fetch systemuser details via Xrm.WebApi, falling back to basic context', error);
                 }
-            } catch (error) {
-                console.warn('Failed to fetch systemuser details, falling back to basic context', error);
             }
 
-            // Basic fallback from Xrm
+            // Basic fallback from Xrm context
             return {
                 id: userId,
                 displayName: userName || 'Power Apps User',
@@ -223,7 +232,6 @@ export class DataverseAdapter implements DataSourceAdapter {
 
         // 2. Fallback for Local Dev (when not in Power Apps)
         console.log('No Dataverse context found (Xrm). Using mock user for local dev.');
-        // Use the first mock user (Alice Admin) but ensure roles are set
         const mockUser = mockTeamMembers[0];
         return {
             ...mockUser,
@@ -238,28 +246,39 @@ export class DataverseAdapter implements DataSourceAdapter {
             const currentUser = await this.getCurrentUser();
             if (!currentUser) return [];
 
-            const client = getClient(dataSourcesInfo);
-            // Query for users where manager (parentsystemuserid) is the current user
-            const result = await client.retrieveMultipleRecordsAsync<any>('systemuser', {
-                filter: `_parentsystemuserid_value eq '${currentUser.id}'`,
-                select: ['systemuserid', 'fullname', 'internalemailaddress', 'jobtitle', 'address1_city']
-            });
+            const xrm = (window as any).Xrm;
 
-            if (result.data) {
-                return (result.data as any[]).map((u: any) => ({
-                    id: u.systemuserid,
-                    displayName: u.fullname || 'Unknown',
-                    email: u.internalemailaddress || '',
-                    firstName: u.firstname,
-                    lastName: u.lastname,
-                    jobTitle: u.jobtitle,
-                    department: u.address1_city,
-                    isManager: false,
-                    isAdmin: false,
-                    roles: ['employee'],
-                    currentStatus: 'available', // TODO: Fetch status from leave requests
-                }));
+            // Use Xrm.WebApi for systemuser queries — systemuser is a system table
+            // not registered in dataSourcesInfo, so getClient() cannot access it
+            if (xrm?.WebApi) {
+                const result = await xrm.WebApi.retrieveMultipleRecords(
+                    'systemuser',
+                    `?$filter=_parentsystemuserid_value eq '${currentUser.id}'&$select=systemuserid,fullname,firstname,lastname,internalemailaddress,jobtitle,address1_city`
+                );
+
+                if (result?.entities) {
+                    return result.entities.map((u: any) => ({
+                        id: u.systemuserid,
+                        displayName: u.fullname || 'Unknown',
+                        email: u.internalemailaddress || '',
+                        firstName: u.firstname,
+                        lastName: u.lastname,
+                        jobTitle: u.jobtitle,
+                        department: u.address1_city,
+                        isManager: false,
+                        isAdmin: false,
+                        currentStatus: 'available' as const,
+                    }));
+                }
             }
+
+            // Local dev fallback: return mock team members (excluding the current user)
+            if (!xrm) {
+                return mockTeamMembers
+                    .filter(m => m.id !== currentUser.id)
+                    .map(m => ({ ...m }));
+            }
+
             return [];
         } catch (error) {
             console.warn('Failed to fetch team members:', error);
