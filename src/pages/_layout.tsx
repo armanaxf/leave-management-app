@@ -33,7 +33,7 @@ export default function Layout({ showHeader = true }: LayoutProps) {
 
   const appName = settings?.find(s => s.key === 'appName')?.value || "Leave Manager"
   const displayName = contextUser?.fullName || currentUser?.displayName || "User"
-  const userStatus = contextUser ? "online" : "offline" // Simple indicator
+
 
   return (
     <div className="min-h-dvh flex flex-col bg-background">
@@ -103,8 +103,6 @@ export default function Layout({ showHeader = true }: LayoutProps) {
             <UserAvatar
               name={displayName}
               className="ml-2"
-              showStatus={true}
-              status={userStatus}
             />
           </div>
         </div>
