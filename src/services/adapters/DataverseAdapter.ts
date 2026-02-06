@@ -505,6 +505,16 @@ export class DataverseAdapter implements DataSourceAdapter {
         // Invalidate cache
         this.leaveTypesCache = null;
 
+        if (!result.data) {
+            console.warn('Create operation returned no data. Returning optimistic result.');
+            // Return optimistic result
+            return {
+                id: (result as any).id || 'temp-id',
+                ...leaveType,
+                maxDaysPerRequest: leaveType.maxDaysPerRequest || null
+            } as LeaveType;
+        }
+
         return mapLeaveType(result.data);
     }
 
