@@ -353,13 +353,10 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_employeename: '', // Will be populated from user context
             lm_startdate: request.startDate.toISOString(),
             lm_enddate: request.endDate.toISOString(),
-            lm_halfdaystart: request.halfDayStart ? 1 : 0,
-            lm_halfdayend: request.halfDayEnd ? 1 : 0,
+            lm_halfdaystart: request.halfDayStart,
+            lm_halfdayend: request.halfDayEnd,
             lm_totaldays: totalDays.toString(),
             lm_reason: reasonWithMetadata,
-            ownerid: employeeId,
-            owneridtype: 'systemuser',
-            statecode: 0,
         } as any);
 
         return mapLeaveRequest(result.data, leaveTypes);
@@ -434,8 +431,6 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_pending: balance.pending.toString(),
             lm_carryover: balance.carryOver.toString(),
             _lm_leavetype_value: balance.leaveTypeId,
-            ownerid: balance.employeeId,
-            owneridtype: 'systemuser',
             statecode: 0,
         } as any);
 
@@ -458,9 +453,6 @@ export class DataverseAdapter implements DataSourceAdapter {
                 lm_pending: '0',
                 lm_carryover: '0',
                 _lm_leavetype_value: leaveType.id,
-                ownerid: employeeId,
-                owneridtype: 'systemuser',
-                statecode: 0,
             } as any);
 
             balances.push(mapLeaveBalance(result.data, leaveTypes));
@@ -493,13 +485,10 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_code: leaveType.code,
             lm_color: leaveType.color,
             lm_icon: leaveType.icon,
-            lm_requiresapproval: leaveType.requiresApproval ? 1 : 0,
+            lm_requiresapproval: leaveType.requiresApproval,
             lm_maxdaysperrequest: leaveType.maxDaysPerRequest?.toString(),
-            lm_isactive: leaveType.isActive ? 1 : 0,
+            lm_isactive: leaveType.isActive,
             lm_sortorder: leaveType.sortOrder.toString(),
-            ownerid: '', // Will be set by system
-            owneridtype: 'systemuser',
-            statecode: 0,
         } as any);
 
         // Invalidate cache
@@ -525,9 +514,9 @@ export class DataverseAdapter implements DataSourceAdapter {
         if (updates.code !== undefined) dvUpdates.lm_code = updates.code;
         if (updates.color !== undefined) dvUpdates.lm_color = updates.color;
         if (updates.icon !== undefined) dvUpdates.lm_icon = updates.icon;
-        if (updates.requiresApproval !== undefined) dvUpdates.lm_requiresapproval = updates.requiresApproval ? 1 : 0;
+        if (updates.requiresApproval !== undefined) dvUpdates.lm_requiresapproval = updates.requiresApproval;
         if (updates.maxDaysPerRequest !== undefined) dvUpdates.lm_maxdaysperrequest = updates.maxDaysPerRequest?.toString();
-        if (updates.isActive !== undefined) dvUpdates.lm_isactive = updates.isActive ? 1 : 0;
+        if (updates.isActive !== undefined) dvUpdates.lm_isactive = updates.isActive;
         if (updates.sortOrder !== undefined) dvUpdates.lm_sortorder = updates.sortOrder.toString();
 
         const result = await Lm_leavetypesService.update(id, dvUpdates);

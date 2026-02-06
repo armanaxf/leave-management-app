@@ -74,7 +74,10 @@ export function useCreateLeaveType() {
     return useMutation({
         mutationFn: (leaveType: Omit<LeaveType, 'id'>) =>
             dataverseAdapter.createLeaveType(leaveType),
-        onSuccess: () => {
+        onSuccess: (data) => {
+            queryClient.setQueryData(queryKeys.leaveTypes, (old: LeaveType[] | undefined) => {
+                return old ? [...old, data] : [data];
+            });
             queryClient.invalidateQueries({ queryKey: queryKeys.leaveTypes });
         },
     });
