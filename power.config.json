@@ -8,7 +8,16 @@
   "logoPath": "Default",
   "localAppUrl": "http://localhost:3000/",
   "region": "prod",
-  "connectionReferences": {},
+  "connectionReferences": {
+    "663e7818-aee7-4238-af72-196750c28c29": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+      "displayName": "Office 365 Users",
+      "dataSources": [
+        "office365users"
+      ],
+      "dataSets": {}
+    }
+  },
   "databaseReferences": {
     "default.cds": {
       "state": "Configured",

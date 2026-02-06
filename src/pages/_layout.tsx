@@ -1,16 +1,39 @@
+
+import { useEffect, useState } from "react"
 import { Outlet, NavLink } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Palmtree } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 import { useSettings } from "@/hooks"
+import { UserAvatar } from "@/components/layout/UserAvatar"
+import { getContext, type IContext } from "@microsoft/power-apps/app"
 
 type LayoutProps = { showHeader?: boolean }
 
 export default function Layout({ showHeader = true }: LayoutProps) {
-  const { isAdmin } = useUserStore()
+  const { isAdmin, currentUser } = useUserStore()
   const { data: settings } = useSettings()
+  // Use indexed access type for user property
+  const [contextUser, setContextUser] = useState<IContext['user'] | null>(null)
+
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const context = await getContext()
+        if (context?.user) {
+          console.log("Power Apps Context User:", context.user)
+          setContextUser(context.user)
+        }
+      } catch (e) {
+        console.warn("Failed to get Power Apps context (likely local dev):", e)
+      }
+    }
+    fetchContext()
+  }, [])
 
   const appName = settings?.find(s => s.key === 'appName')?.value || "Leave Manager"
+  const displayName = contextUser?.fullName || currentUser?.displayName || "User"
+  const userStatus = contextUser ? "online" : "offline" // Simple indicator
 
   return (
     <div className="min-h-dvh flex flex-col bg-background">
@@ -77,6 +100,12 @@ export default function Layout({ showHeader = true }: LayoutProps) {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <ModeToggle />
+            <UserAvatar
+              name={displayName}
+              className="ml-2"
+              showStatus={true}
+              status={userStatus}
+            />
           </div>
         </div>
       </header >

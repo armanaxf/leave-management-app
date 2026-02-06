@@ -10,6 +10,7 @@ export * as Lm_leavebalancesModel from './models/Lm_leavebalancesModel';
 export * as Lm_leaverequestsModel from './models/Lm_leaverequestsModel';
 export * as Lm_leavetypesModel from './models/Lm_leavetypesModel';
 export * as Lm_publicholidaiesModel from './models/Lm_publicholidaiesModel';
+export * as Office365UsersModel from './models/Office365UsersModel';
 
 // Services
 export * from './services/Lm_appsettingsService';
@@ -17,3 +18,4 @@ export * from './services/Lm_leavebalancesService';
 export * from './services/Lm_leaverequestsService';
 export * from './services/Lm_leavetypesService';
 export * from './services/Lm_publicholidaiesService';
+export * from './services/Office365UsersService';
