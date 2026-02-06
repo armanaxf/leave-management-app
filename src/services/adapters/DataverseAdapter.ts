@@ -17,7 +17,7 @@ import type {
 
 import { getClient } from '@microsoft/power-apps/data';
 import { dataSourcesInfo } from '../../../.power/schemas/appschemas/dataSourcesInfo';
-import { mockTeamMembers } from '@/lib/mockData';
+
 
 // Import generated services
 import { Lm_leavetypesService } from '@/generated/services/Lm_leavetypesService';
@@ -224,9 +224,16 @@ export class DataverseAdapter implements DataSourceAdapter {
         // 2. Fallback for Local Dev (when not in Power Apps)
         console.log('No Dataverse context found (Xrm). Using mock user for local dev.');
         // Use the first mock user (Alice Admin) but ensure roles are set
-        const mockUser = mockTeamMembers[0];
         return {
-            ...mockUser,
+            id: 'dev-user',
+            displayName: 'Dev User',
+            email: 'dev@local',
+            firstName: 'Dev',
+            lastName: 'User',
+            jobTitle: 'Developer',
+            department: 'IT',
+            isManager: true,
+            isAdmin: true,
             roles: ['admin', 'manager', 'employee'],
             directReports: [],
             teamMembers: []

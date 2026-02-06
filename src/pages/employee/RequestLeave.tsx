@@ -16,56 +16,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConflictWarning } from '@/components/leave/ConflictWarning';
 import { cn } from '@/lib/utils';
-import { useLeaveTypes, useCreateLeaveRequest } from '@/hooks';
+import { useLeaveTypes, useCreateLeaveRequest, useLeaveRequests, useTeamMembers } from '@/hooks';
 import { useUserStore } from '@/stores';
 import type { ConflictAnalysis, LeaveRequest } from '@/types';
 
-// Mock conflict analysis function (will be replaced with AI service later)
+// Real conflict analysis function
 function analyzeConflicts(
     startDate: Date | undefined,
-    endDate: Date | undefined
+    endDate: Date | undefined,
+    allRequests: LeaveRequest[] | undefined,
+    teamSize: number,
+    currentUserId: string | undefined
 ): ConflictAnalysis | null {
-    if (!startDate || !endDate) return null;
+    if (!startDate || !endDate || !allRequests) return null;
 
-    // Mock: 30% chance of medium conflict, 10% chance of high conflict
-    const rand = Math.random();
-    if (rand > 0.6) {
-        const mockRequest: LeaveRequest = {
-            id: 'mock1',
-            employeeId: 'emp1',
-            employeeEmail: 'sarah@example.com',
-            employeeName: 'Sarah Wilson',
-            leaveTypeId: '1',
-            startDate: startDate,
-            endDate: addDays(startDate, 2),
-            halfDayStart: false,
-            halfDayEnd: false,
-            totalDays: 3,
-            status: 'approved',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+    // Filter for active (approved/pending) requests that overlap, EXCLUDING current user
+    const overlappingRequests = allRequests.filter(req => {
+        // Exclude current user's own requests
+        if (req.employeeId === currentUserId) return false;
 
-        return {
-            hasConflict: true,
-            severity: rand > 0.9 ? 'high' : 'medium',
-            overlappingRequests: [
-                mockRequest,
-                { ...mockRequest, id: 'mock2', employeeName: 'James Chen', employeeEmail: 'james@example.com' },
-            ],
-            teamCoveragePercent: rand > 0.9 ? 60 : 35,
-            message:
-                rand > 0.9
-                    ? 'Critical: More than 50% of your team will be unavailable during this period.'
-                    : '2 team members already have approved leave during this period.',
-            suggestions:
-                rand > 0.9
-                    ? ['Consider adjusting your dates', 'Check with your manager before submitting']
-                    : undefined,
-        };
+        // Exclude cancelled/rejected
+        if (req.status === 'cancelled' || req.status === 'rejected') return false;
+
+        const reqStart = new Date(req.startDate);
+        const reqEnd = new Date(req.endDate);
+
+        // Check overlap
+        return (startDate <= reqEnd && endDate >= reqStart);
+    });
+
+    if (overlappingRequests.length === 0) {
+        return { hasConflict: false, severity: 'low', overlappingRequests: [], teamCoveragePercent: 0, message: '' };
     }
 
-    return { hasConflict: false, severity: 'low', overlappingRequests: [], teamCoveragePercent: 0, message: '' };
+    const overlapCount = overlappingRequests.length;
+    // Calculate percentage of team unavailable (excluding self from total team size consideration for simplicity? 
+    // Usually teamSize includes everyone. So if teamSize is 10, and 2 others are away, that's 20% + you = 30%.)
+    const teamCoveragePercent = Math.round(((overlapCount + 1) / (teamSize || 1)) * 100);
+
+    let severity: 'low' | 'medium' | 'high' = 'low';
+    let message = '';
+
+    if (teamCoveragePercent > 50) {
+        severity = 'high';
+        message = `Critical: More than 50% of your team (${overlapCount} others) will be unavailable.`;
+    } else if (overlapCount >= 2) {
+        severity = 'medium';
+        message = `${overlapCount} team members already have leave during this period.`;
+    } else {
+        message = `${overlapCount} team member is also away.`;
+    }
+
+    return {
+        hasConflict: true,
+        severity,
+        overlappingRequests,
+        teamCoveragePercent,
+        message,
+        suggestions: severity === 'high' ? ['Consider adjusting dates'] : undefined
+    };
 }
 
 // Calculate working days between dates
@@ -95,6 +104,10 @@ export default function RequestLeave() {
     const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
     const createRequest = useCreateLeaveRequest();
 
+    // Fetch context data for conflict checking
+    const { data: teamMembers } = useTeamMembers();
+    const { data: allRequests } = useLeaveRequests({ status: ['approved', 'pending'] });
+
     // Form state
     const [leaveTypeId, setLeaveTypeId] = useState<string>('');
     const [startDate, setStartDate] = useState<Date>();
@@ -116,8 +129,14 @@ export default function RequestLeave() {
     // Check for conflicts when dates change
     const conflictAnalysis = useMemo(() => {
         if (conflictDismissed) return null;
-        return analyzeConflicts(startDate, endDate);
-    }, [startDate, endDate, conflictDismissed]);
+        return analyzeConflicts(
+            startDate,
+            endDate,
+            allRequests,
+            (teamMembers?.length || 0) + 1, // +1 to include self in "team size" roughly if members excludes self
+            currentUser?.id
+        );
+    }, [startDate, endDate, conflictDismissed, allRequests, teamMembers, currentUser]);
 
     // Form validation
     const isValid = leaveTypeId && startDate && endDate && totalDays > 0;

@@ -5,121 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LeaveCalendar } from '@/components/calendar/LeaveCalendar';
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { format, isSameDay } from 'date-fns';
-import { Users, Calendar as CalendarIcon } from 'lucide-react';
-import type { LeaveRequest, LeaveType, PublicHoliday, TeamMember } from '@/types';
+import { Users, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { useLeaveRequests, useLeaveTypes, usePublicHolidays, useTeamMembers } from '@/hooks';
 
-// Mock Data
-const mockPublicHolidays: PublicHoliday[] = [
-    { id: '1', name: 'New Year Day', date: new Date('2026-01-01'), region: 'UK', isRecurring: true },
-    { id: '2', name: 'Good Friday', date: new Date('2026-04-03'), region: 'UK', isRecurring: false },
-    { id: '3', name: 'Easter Monday', date: new Date('2026-04-06'), region: 'UK', isRecurring: false },
-    { id: '4', name: 'May Day', date: new Date('2026-05-04'), region: 'UK', isRecurring: true },
-];
-
-const mockLeaveTypes: LeaveType[] = [
-    { id: '1', name: 'Annual Leave', code: 'AL', color: '#3B82F6', icon: 'sun', requiresApproval: true, maxDaysPerRequest: null, isActive: true, sortOrder: 1 },
-    { id: '2', name: 'Sick Leave', code: 'SL', color: '#EF4444', icon: 'thermometer', requiresApproval: false, maxDaysPerRequest: 5, isActive: true, sortOrder: 2 },
-    { id: '3', name: 'Personal Leave', code: 'PL', color: '#8B5CF6', icon: 'user', requiresApproval: true, maxDaysPerRequest: 3, isActive: true, sortOrder: 3 },
-];
-
-const mockTeamRequests: LeaveRequest[] = [
-    {
-        id: '1',
-        employeeId: 'emp1',
-        employeeName: 'Sarah Wilson',
-        employeeEmail: 'sarah@example.com',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-03-10'),
-        endDate: new Date('2026-03-14'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 5,
-        status: 'approved',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        approverId: 'manager1',
-        approverName: 'You'
-    },
-    {
-        id: '2',
-        employeeId: 'emp2',
-        employeeName: 'James Chen',
-        employeeEmail: 'james@example.com',
-        leaveTypeId: '2',
-        leaveType: mockLeaveTypes[1], // Sick
-        startDate: new Date('2026-03-12'),
-        endDate: new Date('2026-03-13'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 2,
-        status: 'approved',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        approverId: 'manager1',
-        approverName: 'You'
-    },
-    {
-        id: '3',
-        employeeId: 'emp3',
-        employeeName: 'Emma Thompson',
-        employeeEmail: 'emma@example.com',
-        leaveTypeId: '1',
-        leaveType: mockLeaveTypes[0],
-        startDate: new Date('2026-03-23'),
-        endDate: new Date('2026-03-27'),
-        halfDayStart: false,
-        halfDayEnd: false,
-        totalDays: 5,
-        status: 'approved',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        approverId: 'manager1',
-        approverName: 'You'
-    },
-];
-
-const mockTeamMembers: TeamMember[] = [
-    {
-        id: 'emp1',
-        displayName: 'Sarah Wilson',
-        email: 'sarah@example.com',
-        isManager: false,
-        isAdmin: false,
-        currentStatus: 'available'
-    },
-    {
-        id: 'emp2',
-        displayName: 'James Chen',
-        email: 'james@example.com',
-        isManager: false,
-        isAdmin: false,
-        currentStatus: 'available'
-    },
-    {
-        id: 'emp3',
-        displayName: 'Emma Thompson',
-        email: 'emma@example.com',
-        isManager: false,
-        isAdmin: false,
-        currentStatus: 'available'
-    },
-    {
-        id: 'manager1',
-        displayName: 'You',
-        email: 'you@example.com',
-        isManager: true,
-        isAdmin: false,
-        currentStatus: 'available'
-    },
-];
 
 export default function TeamCalendar() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    const currentYear = new Date().getFullYear();
+
+    // Fetch Data
+    const { data: teamMembers, isLoading: membersLoading } = useTeamMembers();
+    const { data: leaveTypes, isLoading: typesLoading } = useLeaveTypes();
+    const { data: publicHolidays, isLoading: holidaysLoading } = usePublicHolidays('GB', currentYear);
+
+    // Fetch all requests (Dataverse security will filter what we can see)
+    // We filter for "approved" status usually for calendar, but let's fetch all active
+    const { data: leaveRequests, isLoading: requestsLoading } = useLeaveRequests({
+        status: ['approved', 'pending']
+    });
+
+    const isLoading = membersLoading || typesLoading || holidaysLoading || requestsLoading;
 
     // Filter requests for selected date
-    const selectedDateRequests = selectedDate
-        ? mockTeamRequests.filter(req => {
+    const selectedDateRequests = selectedDate && leaveRequests
+        ? leaveRequests.filter(req => {
             const start = new Date(req.startDate);
             const end = new Date(req.endDate);
             start.setHours(0, 0, 0, 0);
@@ -128,9 +37,17 @@ export default function TeamCalendar() {
         })
         : [];
 
-    const selectedHoliday = selectedDate
-        ? mockPublicHolidays.find(h => isSameDay(new Date(h.date), selectedDate))
+    const selectedHoliday = selectedDate && publicHolidays
+        ? publicHolidays.find(h => isSameDay(new Date(h.date), selectedDate))
         : undefined;
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6 h-[500px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-6 p-6">
@@ -147,16 +64,18 @@ export default function TeamCalendar() {
 
                 {/* Team Avatars Summary */}
                 <div className="flex items-center -space-x-2">
-                    {mockTeamMembers.map(member => (
+                    {teamMembers?.slice(0, 5).map(member => (
                         <UserAvatar
                             key={member.id}
                             name={member.displayName}
                             className="border-2 border-background w-8 h-8"
                         />
                     ))}
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-[10px] font-medium border-2 border-background">
-                        +2
-                    </div>
+                    {(teamMembers?.length || 0) > 5 && (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-[10px] font-medium border-2 border-background">
+                            +{(teamMembers?.length || 0) - 5}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -164,8 +83,8 @@ export default function TeamCalendar() {
                 {/* Main Calendar - Span 2 cols */}
                 <div className="lg:col-span-2 space-y-6">
                     <LeaveCalendar
-                        requests={mockTeamRequests}
-                        publicHolidays={mockPublicHolidays}
+                        requests={leaveRequests || []}
+                        publicHolidays={publicHolidays || []}
                         onDateClick={setSelectedDate}
                         className="min-h-[500px]"
                     />
@@ -176,7 +95,7 @@ export default function TeamCalendar() {
                             <span className="w-3 h-3 rounded-full bg-success"></span>
                             Public Holiday
                         </div>
-                        {mockLeaveTypes.map(type => (
+                        {leaveTypes?.map(type => (
                             <div key={type.id} className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full opacity-20" style={{ backgroundColor: type.color }}></span>
                                 <span style={{ color: type.color }} className="font-medium">{type.name}</span>
@@ -233,20 +152,21 @@ export default function TeamCalendar() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base text-muted-foreground font-medium uppercase tracking-wider text-xs">
-                                Upcoming - Next 14 Days
+                                Upcoming - Who's Away
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {mockTeamRequests
-                                .filter(r => new Date(r.startDate) > new Date())
-                                .slice(0, 3)
+                            {leaveRequests
+                                ?.filter(r => new Date(r.startDate) > new Date() && r.status === 'approved')
+                                .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                                .slice(0, 5)
                                 .map(req => (
                                     <div key={req.id} className="flex items-start gap-3">
                                         <UserAvatar name={req.employeeName || ''} size="sm" className="mt-0.5" />
                                         <div className="flex-1">
                                             <span className="text-sm font-medium block">{req.employeeName}</span>
                                             <span className="text-xs text-muted-foreground">
-                                                {format(req.startDate, 'MMM d')} - {format(req.endDate, 'MMM d')}
+                                                {format(new Date(req.startDate), 'MMM d')} - {format(new Date(req.endDate), 'MMM d')}
                                             </span>
                                         </div>
                                         <span
@@ -261,6 +181,11 @@ export default function TeamCalendar() {
                                         </span>
                                     </div>
                                 ))}
+                            {(!leaveRequests || leaveRequests.filter(r => new Date(r.startDate) > new Date() && r.status === 'approved').length === 0) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    No upcoming leave scheduled.
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
