@@ -355,9 +355,31 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_enddate: request.endDate.toISOString(),
             lm_halfdaystart: request.halfDayStart,
             lm_halfdayend: request.halfDayEnd,
-            lm_totaldays: totalDays.toString(),
+            lm_totaldays: totalDays,
             lm_reason: reasonWithMetadata,
         } as any);
+
+        if (!result.data) {
+            console.warn('createLeaveRequest returned no data. Raw result:', JSON.stringify(result));
+            // Return optimistic
+            return {
+                id: (result as any).id || 'temp-req-id',
+                employeeId,
+                employeeName: '', // Populated later
+                leaveTypeId: request.leaveTypeId,
+                leaveType: leaveTypes.find(t => t.id === request.leaveTypeId),
+                startDate: request.startDate,
+                endDate: request.endDate,
+                totalDays,
+                reason: request.reason,
+                status: 'pending',
+                halfDayStart: request.halfDayStart || false,
+                halfDayEnd: request.halfDayEnd || false,
+                employeeEmail: '', // Populated on refresh
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+        }
 
         return mapLeaveRequest(result.data, leaveTypes);
     }
@@ -486,9 +508,9 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_color: leaveType.color,
             lm_icon: leaveType.icon,
             lm_requiresapproval: leaveType.requiresApproval,
-            lm_maxdaysperrequest: leaveType.maxDaysPerRequest?.toString(),
+            lm_maxdaysperrequest: leaveType.maxDaysPerRequest,
             lm_isactive: leaveType.isActive,
-            lm_sortorder: leaveType.sortOrder.toString(),
+            lm_sortorder: leaveType.sortOrder,
         } as any);
 
         // Invalidate cache
@@ -515,9 +537,9 @@ export class DataverseAdapter implements DataSourceAdapter {
         if (updates.color !== undefined) dvUpdates.lm_color = updates.color;
         if (updates.icon !== undefined) dvUpdates.lm_icon = updates.icon;
         if (updates.requiresApproval !== undefined) dvUpdates.lm_requiresapproval = updates.requiresApproval;
-        if (updates.maxDaysPerRequest !== undefined) dvUpdates.lm_maxdaysperrequest = updates.maxDaysPerRequest?.toString();
+        if (updates.maxDaysPerRequest !== undefined) dvUpdates.lm_maxdaysperrequest = updates.maxDaysPerRequest;
         if (updates.isActive !== undefined) dvUpdates.lm_isactive = updates.isActive;
-        if (updates.sortOrder !== undefined) dvUpdates.lm_sortorder = updates.sortOrder.toString();
+        if (updates.sortOrder !== undefined) dvUpdates.lm_sortorder = updates.sortOrder;
 
         const result = await Lm_leavetypesService.update(id, dvUpdates);
 
