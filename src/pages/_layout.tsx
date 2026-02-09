@@ -43,7 +43,15 @@ export default function Layout({ showHeader = true }: LayoutProps) {
           {/* Logo & Nav */}
           <div className="flex items-center gap-6">
             <NavLink to="/" className="flex items-center gap-2 font-display font-semibold text-foreground">
-              <Palmtree className="h-5 w-5 text-primary" />
+              {settings?.find(s => s.key === 'appLogoUrl')?.value ? (
+                <img
+                  src={settings.find(s => s.key === 'appLogoUrl')?.value}
+                  alt="Logo"
+                  className="h-8 w-auto object-contain max-w-[120px]"
+                />
+              ) : (
+                <Palmtree className="h-5 w-5 text-primary" />
+              )}
               <span>{appName}</span>
             </NavLink>
 

@@ -202,10 +202,10 @@ export default function AdminSettings() {
                         <div className="grid gap-6 md:grid-cols-2">
                             <Card className="md:col-span-2 border-muted/40 shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Organization Details</CardTitle>
-                                    <CardDescription>Basic information used in emails and headers.</CardDescription>
+                                    <CardTitle>Branding & Appearance</CardTitle>
+                                    <CardDescription>Customize the look and feel of the application.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="space-y-6">
                                     <div className="grid gap-2">
                                         <Label htmlFor="appName">Application Name</Label>
                                         <Input
@@ -215,13 +215,87 @@ export default function AdminSettings() {
                                             className="max-w-md bg-muted/20"
                                         />
                                     </div>
+
+                                    <div className="grid gap-4">
+                                        <Label>Application Logo / Header Image</Label>
+                                        <div className="flex items-start gap-6">
+                                            <div className="flex-shrink-0">
+                                                {settings.appLogoUrl ? (
+                                                    <div className="relative group">
+                                                        <div className="h-20 w-20 rounded-lg border bg-muted/20 flex items-center justify-center overflow-hidden">
+                                                            <img
+                                                                src={settings.appLogoUrl}
+                                                                alt="App Logo"
+                                                                className="max-h-full max-w-full object-contain"
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="icon"
+                                                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            onClick={() => updateSetting('appLogoUrl', '')}
+                                                        >
+                                                            <span className="sr-only">Remove</span>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-20 w-20 rounded-lg border border-dashed bg-muted/10 flex items-center justify-center text-muted-foreground">
+                                                        <Building className="h-8 w-8 opacity-20" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2 flex-1 max-w-sm">
+                                                <Input
+                                                    type="file"
+                                                    accept="image/png, image/jpeg, image/svg+xml"
+                                                    className="cursor-pointer"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+
+                                                        if (file.size > 50 * 1024) {
+                                                            toast.error('File too large', {
+                                                                description: 'Please upload a logo smaller than 50KB.'
+                                                            });
+                                                            e.target.value = ''; // Reset input
+                                                            return;
+                                                        }
+
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            const base64 = reader.result as string;
+                                                            updateSetting('appLogoUrl', base64);
+                                                            toast.success('Logo uploaded', {
+                                                                description: 'Don\'t forget to save your changes.'
+                                                            });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }}
+                                                />
+                                                <p className="text-[13px] text-muted-foreground">
+                                                    Upload a PNG, JPG, or SVG (max 50KB). This will replace the default palm tree icon in the header.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="md:col-span-2 border-muted/40 shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Regional Format</CardTitle>
+                                    <CardDescription>Set defaults for date formats and currency.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="region">Regional Format</Label>
+                                        <Label htmlFor="region">Region</Label>
                                         <Select
                                             value={settings.defaultRegion}
                                             onValueChange={(val) => updateSetting('defaultRegion', val)}
                                         >
-                                            <SelectTrigger id="region" className="max-w-xs bg-muted/20">
+                                            <SelectTrigger id="region" className="w-full bg-muted/20">
                                                 <SelectValue placeholder="Select region" />
                                             </SelectTrigger>
                                             <SelectContent>

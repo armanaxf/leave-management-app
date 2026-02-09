@@ -345,18 +345,24 @@ export class DataverseAdapter implements DataSourceAdapter {
         if (request.halfDayStart) totalDays -= 0.5;
         if (request.halfDayEnd) totalDays -= 0.5;
 
+        // Fetch current user to get the name
+        const currentUser = await this.getCurrentUser();
+        const employeeName = currentUser?.displayName || 'Unknown';
+
         // Encode leave type ID and status in reason field (until lookup columns added)
         const reasonWithMetadata = `[LEAVETYPE:${request.leaveTypeId}][STATUS:pending] ${request.reason || ''}`.trim();
 
         const result = await Lm_leaverequestsService.create({
             lm_employeeid: employeeId,
-            lm_employeename: '', // Will be populated from user context
+            lm_employeename: employeeName,
             lm_startdate: request.startDate.toISOString(),
             lm_enddate: request.endDate.toISOString(),
             lm_halfdaystart: request.halfDayStart,
             lm_halfdayend: request.halfDayEnd,
             lm_totaldays: totalDays,
             lm_reason: reasonWithMetadata,
+            'lm_LeaveType@odata.bind': `/lm_leavetypes(${request.leaveTypeId})`,
+            'lm_Employee@odata.bind': `/systemusers(${employeeId})`,
         } as any);
 
         if (!result.data) {
@@ -365,7 +371,7 @@ export class DataverseAdapter implements DataSourceAdapter {
             return {
                 id: (result as any).id || 'temp-req-id',
                 employeeId,
-                employeeName: '', // Populated later
+                employeeName: employeeName, // Populated
                 leaveTypeId: request.leaveTypeId,
                 leaveType: leaveTypes.find(t => t.id === request.leaveTypeId),
                 startDate: request.startDate,
@@ -475,6 +481,8 @@ export class DataverseAdapter implements DataSourceAdapter {
                 lm_pending: '0',
                 lm_carryover: '0',
                 _lm_leavetype_value: leaveType.id,
+                'lm_LeaveType@odata.bind': `/lm_leavetypes(${leaveType.id})`,
+                'lm_Employee@odata.bind': `/systemusers(${employeeId})`,
             } as any);
 
             balances.push(mapLeaveBalance(result.data, leaveTypes));

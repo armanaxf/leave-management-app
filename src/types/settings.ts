@@ -15,6 +15,7 @@ export interface AppSetting {
 export interface AppSettings {
     // General
     appName: string;
+    appLogoUrl: string;
     defaultRegion: string;
 
     // Leave
@@ -39,6 +40,7 @@ export interface AppSettings {
  */
 export const DEFAULT_SETTINGS: AppSettings = {
     appName: 'Leave Management App',
+    appLogoUrl: '',
     defaultRegion: 'GB',
 
     defaultAnnualEntitlement: 28, // UK statutory
