@@ -290,6 +290,20 @@ function New-DateTimeColumn {
     }
 }
 
+function New-MemoColumn {
+    param([string]$SchemaName, [string]$DisplayName, [int]$MaxLength = 100000)
+    return @{
+        "@odata.type" = "Microsoft.Dynamics.CRM.MemoAttributeMetadata"
+        SchemaName = $SchemaName
+        MaxLength = $MaxLength
+        FormatName = @{ Value = "TextArea" }
+        DisplayName = @{
+            "@odata.type" = "Microsoft.Dynamics.CRM.Label"
+            LocalizedLabels = @(@{ "@odata.type" = "Microsoft.Dynamics.CRM.LocalizedLabel"; Label = $DisplayName; LanguageCode = 1033 })
+        }
+    }
+}
+
 # Main execution
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Magenta
@@ -421,7 +435,8 @@ $result = New-DataverseTable -BaseUrl $EnvironmentUrl -Token $token `
 
 if ($result) {
     $successCount++
-    Add-DataverseColumn -BaseUrl $EnvironmentUrl -Token $token -TableSchemaName "${prefix}_appsetting" -ColumnDefinition (New-StringColumn -SchemaName "${prefix}_value" -DisplayName "Value" -MaxLength 500)
+    # Use New-MemoColumn for Value to support large content (like Base64 images)
+    Add-DataverseColumn -BaseUrl $EnvironmentUrl -Token $token -TableSchemaName "${prefix}_appsetting" -ColumnDefinition (New-MemoColumn -SchemaName "${prefix}_value" -DisplayName "Value" -MaxLength 100000)
 } else { $failCount++ }
 
 # ========================================

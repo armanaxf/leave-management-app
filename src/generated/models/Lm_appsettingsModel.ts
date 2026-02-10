@@ -15,6 +15,7 @@ export type Lm_appsettingsstatuscode = keyof typeof Lm_appsettingsstatuscode;
 
 export interface Lm_appsettingsBase {
   importsequencenumber?: string;
+  jlgc_value?: string;
   lm_appsettingid: string;
   lm_key: string;
   lm_value?: string;

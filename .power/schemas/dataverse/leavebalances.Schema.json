@@ -86,6 +86,13 @@
           "x-ms-dataverse-type": "DecimalType",
           "x-ms-schema-name": "lm_carryover"
         },
+        "lm_employee": {
+          "type": "string",
+          "title": "Employee",
+          "x-ms-dataverse-attribute": "lm_employee",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "lm_Employee"
+        },
         "lm_employeeid": {
           "type": "string",
           "title": "Employee ID",
@@ -94,6 +101,24 @@
           "x-ms-schema-name": "lm_employeeid",
           "required": true,
           "maxLength": 50
+        },
+        "lm_employeename": {
+          "type": "string",
+          "title": "lm_employeename",
+          "x-ms-dataverse-attribute": "lm_employeename",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "lm_EmployeeName",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "lm_employeeyominame": {
+          "type": "string",
+          "title": "lm_employeeyominame",
+          "x-ms-dataverse-attribute": "lm_employeeyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "lm_EmployeeYomiName",
+          "x-ms-read-only": true,
+          "maxLength": 200
         },
         "lm_entitlement": {
           "type": "string",
@@ -111,6 +136,22 @@
           "x-ms-dataverse-primary-id": true,
           "required": true,
           "x-ms-keyType": "primary"
+        },
+        "lm_leavetype": {
+          "type": "string",
+          "title": "Leave Type",
+          "x-ms-dataverse-attribute": "lm_leavetype",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "lm_LeaveType"
+        },
+        "lm_leavetypename": {
+          "type": "string",
+          "title": "lm_leavetypename",
+          "x-ms-dataverse-attribute": "lm_leavetypename",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "lm_LeaveTypeName",
+          "x-ms-read-only": true,
+          "maxLength": 100
         },
         "lm_name": {
           "type": "string",

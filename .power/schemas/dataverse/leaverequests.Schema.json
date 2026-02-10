@@ -216,6 +216,22 @@
           "required": true,
           "x-ms-keyType": "primary"
         },
+        "lm_leavetype": {
+          "type": "string",
+          "title": "Leave Type",
+          "x-ms-dataverse-attribute": "lm_leavetype",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "lm_LeaveType"
+        },
+        "lm_leavetypename": {
+          "type": "string",
+          "title": "lm_leavetypename",
+          "x-ms-dataverse-attribute": "lm_leavetypename",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "lm_LeaveTypeName",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
         "lm_reason": {
           "type": "string",
           "title": "Reason",
@@ -416,14 +432,20 @@
           "x-ms-dataverse-type": "StatusType",
           "x-ms-schema-name": "statuscode",
           "enum": [
-            "Active",
-            "Inactive"
+            "Pending",
+            "Cancelled",
+            "Approved",
+            "Rejected"
           ],
           "x-ms-enum-values": [
             1,
-            2
+            2,
+            100000000,
+            100000001
           ],
           "Color": [
+            null,
+            null,
             null,
             null
           ],

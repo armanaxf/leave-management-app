@@ -50,23 +50,55 @@ function mapLeaveType(record: Lm_leavetypes): LeaveType {
     };
 }
 
+// Map Dataverse statuscode values to app LeaveStatus
+// 1 = Pending (renamed from default "Active")
+// 100000000 = Approved (custom status reason)
+// 100000001 = Rejected (custom status reason)
+// 2 = Cancelled (renamed from default "Inactive", statecode=1)
+const STATUS_CODE_TO_STATUS: Record<number, LeaveStatus> = {
+    1: 'pending',
+    100000000: 'approved',
+    100000001: 'rejected',
+    2: 'cancelled',
+};
+
+const STATUS_TO_STATUS_CODE: Record<LeaveStatus, number> = {
+    pending: 1,
+    approved: 100000000,
+    rejected: 100000001,
+    cancelled: 2,
+};
+
 /**
- * Maps Dataverse LeaveRequest record to app LeaveRequest
- * Note: leaveTypeId stored in reason field as [LEAVETYPE:id] until lookup column added
+ * Maps Dataverse LeaveRequest record to app LeaveRequest.
+ * Uses lookup columns (_lm_leavetype_value, _lm_employee_value) when available,
+ * falls back to legacy text-field encoding for pre-existing records.
  */
 function mapLeaveRequest(record: Lm_leaverequests, leaveTypes?: LeaveType[]): LeaveRequest {
-    // Extract leave type ID from reason field pattern [LEAVETYPE:id]
-    const leaveTypeMatch = record.lm_reason?.match(/\[LEAVETYPE:([^\]]+)\]/);
-    const leaveTypeId = leaveTypeMatch?.[1] || '';
+    const rec = record as any;
+
+    // Prefer lookup value for leave type, fall back to reason-field encoding
+    let leaveTypeId: string = rec._lm_leavetype_value || '';
+    if (!leaveTypeId) {
+        const leaveTypeMatch = record.lm_reason?.match(/\[LEAVETYPE:([^\]]+)\]/);
+        leaveTypeId = leaveTypeMatch?.[1] || '';
+    }
     const leaveType = leaveTypes?.find(lt => lt.id === leaveTypeId);
 
-    // Map status from Dataverse statuscode to app LeaveStatus
-    // Default Dataverse statuscodes: 1=Active, 2=Inactive
-    // We use the reason field pattern [STATUS:pending|approved|rejected|cancelled]
-    const statusMatch = record.lm_reason?.match(/\[STATUS:(\w+)\]/);
-    const status = (statusMatch?.[1] as LeaveStatus) || 'pending';
+    // Prefer Dataverse statuscode, fall back to reason-field encoding
+    let status: LeaveStatus;
+    const numericStatus = typeof record.statuscode === 'number'
+        ? record.statuscode
+        : parseInt(String(record.statuscode));
 
-    // Clean reason by removing our metadata tags
+    if (STATUS_CODE_TO_STATUS[numericStatus]) {
+        status = STATUS_CODE_TO_STATUS[numericStatus];
+    } else {
+        const statusMatch = record.lm_reason?.match(/\[STATUS:(\w+)\]/);
+        status = (statusMatch?.[1] as LeaveStatus) || 'pending';
+    }
+
+    // Clean reason by removing legacy metadata tags if present
     const cleanReason = record.lm_reason
         ?.replace(/\[LEAVETYPE:[^\]]+\]\s*/g, '')
         .replace(/\[STATUS:\w+\]\s*/g, '')
@@ -74,7 +106,7 @@ function mapLeaveRequest(record: Lm_leaverequests, leaveTypes?: LeaveType[]): Le
 
     return {
         id: record.lm_leaverequestid,
-        employeeId: record.lm_employeeid,
+        employeeId: rec._lm_employee_value || record.lm_employeeid,
         employeeEmail: record.lm_employeeemail || '',
         employeeName: record.lm_employeename || '',
         leaveTypeId,
@@ -86,7 +118,7 @@ function mapLeaveRequest(record: Lm_leaverequests, leaveTypes?: LeaveType[]): Le
         totalDays: parseFloat(record.lm_totaldays || '0'),
         reason: cleanReason,
         status,
-        approverId: record.lm_approverid,
+        approverId: rec._lm_approver_value || record.lm_approverid,
         approverName: record.lm_approvername,
         approverComments: record.lm_approvercomments,
         approvedAt: record.lm_approvedat ? new Date(record.lm_approvedat) : undefined,
@@ -96,14 +128,25 @@ function mapLeaveRequest(record: Lm_leaverequests, leaveTypes?: LeaveType[]): Le
 }
 
 /**
- * Maps Dataverse LeaveBalance record to app LeaveBalance
- * Note: Name field pattern: {employeeId}-{leaveTypeCode}-{year}
+ * Maps Dataverse LeaveBalance record to app LeaveBalance.
+ * Uses lookup column (_lm_leavetype_value) when available,
+ * falls back to name-field pattern parsing for pre-existing records.
  */
 function mapLeaveBalance(record: Lm_leavebalances, leaveTypes?: LeaveType[]): LeaveBalance {
-    // Extract leave type from name pattern: employeeId-leaveTypeCode-year
-    const nameParts = record.lm_name?.split('-') || [];
-    const leaveTypeCode = nameParts.length >= 2 ? nameParts[1] : '';
-    const leaveType = leaveTypes?.find(lt => lt.code === leaveTypeCode);
+    const rec = record as any;
+
+    // Prefer lookup value, fall back to name-field pattern
+    const lookupLeaveTypeId: string | undefined = rec._lm_leavetype_value;
+    let leaveType: LeaveType | undefined;
+
+    if (lookupLeaveTypeId) {
+        leaveType = leaveTypes?.find(lt => lt.id === lookupLeaveTypeId);
+    } else {
+        // Legacy fallback: parse from name pattern employeeId-leaveTypeCode-year
+        const nameParts = record.lm_name?.split('-') || [];
+        const leaveTypeCode = nameParts.length >= 2 ? nameParts[1] : '';
+        leaveType = leaveTypes?.find(lt => lt.code === leaveTypeCode);
+    }
 
     const entitlement = parseFloat(record.lm_entitlement || '0');
     const used = parseFloat(record.lm_used || '0');
@@ -112,8 +155,8 @@ function mapLeaveBalance(record: Lm_leavebalances, leaveTypes?: LeaveType[]): Le
 
     return {
         id: record.lm_leavebalanceid,
-        employeeId: record.lm_employeeid,
-        leaveTypeId: leaveType?.id || '',
+        employeeId: rec._lm_employee_value || record.lm_employeeid,
+        leaveTypeId: leaveType?.id || lookupLeaveTypeId || '',
         leaveType,
         year: parseInt(record.lm_year || new Date().getFullYear().toString()),
         entitlement,
@@ -289,13 +332,7 @@ export class DataverseAdapter implements DataSourceAdapter {
         }
         if (filters?.status) {
             const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
-            const statusMap: Record<LeaveStatus, number> = {
-                pending: 1,
-                approved: 2,
-                rejected: 3,
-                cancelled: 4,
-            };
-            const statusCodes = statuses.map(s => statusMap[s]);
+            const statusCodes = statuses.map(s => STATUS_TO_STATUS_CODE[s]);
             if (statusCodes.length === 1) {
                 filterParts.push(`statuscode eq ${statusCodes[0]}`);
             } else {
@@ -349,18 +386,18 @@ export class DataverseAdapter implements DataSourceAdapter {
         const currentUser = await this.getCurrentUser();
         const employeeName = currentUser?.displayName || 'Unknown';
 
-        // Encode leave type ID and status in reason field (until lookup columns added)
-        const reasonWithMetadata = `[LEAVETYPE:${request.leaveTypeId}][STATUS:pending] ${request.reason || ''}`.trim();
-
+        // Use lookup bindings for leave type and employee relationships
+        // Reason field now stores only the user's reason text (no metadata encoding)
         const result = await Lm_leaverequestsService.create({
             lm_employeeid: employeeId,
             lm_employeename: employeeName,
+            lm_employeeemail: currentUser?.email || '',
             lm_startdate: request.startDate.toISOString(),
             lm_enddate: request.endDate.toISOString(),
             lm_halfdaystart: request.halfDayStart,
             lm_halfdayend: request.halfDayEnd,
             lm_totaldays: totalDays,
-            lm_reason: reasonWithMetadata,
+            lm_reason: request.reason || '',
             'lm_LeaveType@odata.bind': `/lm_leavetypes(${request.leaveTypeId})`,
             'lm_Employee@odata.bind': `/systemusers(${employeeId})`,
         } as any);
@@ -392,21 +429,21 @@ export class DataverseAdapter implements DataSourceAdapter {
 
     async updateLeaveRequest(id: string, updates: Partial<LeaveRequest>): Promise<LeaveRequest> {
         const leaveTypes = await this.getLeaveTypesCache();
-
-        // First get the current record to update reason field metadata
-        const current = await Lm_leaverequestsService.get(id);
-        let currentReason = current.data?.lm_reason || '';
-
-        // Map app fields to Dataverse fields
         const dvUpdates: Record<string, any> = {};
 
-        // Update status in reason field metadata tag
+        // Set statuscode directly via Dataverse status reason values
         if (updates.status) {
-            currentReason = currentReason.replace(/\[STATUS:\w+\]/, `[STATUS:${updates.status}]`);
-            dvUpdates.lm_reason = currentReason;
+            dvUpdates.statuscode = STATUS_TO_STATUS_CODE[updates.status];
+            // Cancellation requires transitioning to Inactive statecode
+            if (updates.status === 'cancelled') {
+                dvUpdates.statecode = 1;
+            }
         }
 
-        if (updates.approverId !== undefined) dvUpdates.lm_approverid = updates.approverId;
+        if (updates.approverId !== undefined) {
+            dvUpdates.lm_approverid = updates.approverId;
+            dvUpdates['lm_Approver@odata.bind'] = `/systemusers(${updates.approverId})`;
+        }
         if (updates.approverName !== undefined) dvUpdates.lm_approvername = updates.approverName;
         if (updates.approverComments !== undefined) dvUpdates.lm_approvercomments = updates.approverComments;
         if (updates.approvedAt !== undefined) dvUpdates.lm_approvedat = updates.approvedAt?.toISOString();
@@ -458,7 +495,8 @@ export class DataverseAdapter implements DataSourceAdapter {
             lm_used: balance.used.toString(),
             lm_pending: balance.pending.toString(),
             lm_carryover: balance.carryOver.toString(),
-            _lm_leavetype_value: balance.leaveTypeId,
+            'lm_LeaveType@odata.bind': `/lm_leavetypes(${balance.leaveTypeId})`,
+            'lm_Employee@odata.bind': `/systemusers(${balance.employeeId})`,
             statecode: 0,
         } as any);
 
@@ -480,7 +518,6 @@ export class DataverseAdapter implements DataSourceAdapter {
                 lm_used: '0',
                 lm_pending: '0',
                 lm_carryover: '0',
-                _lm_leavetype_value: leaveType.id,
                 'lm_LeaveType@odata.bind': `/lm_leavetypes(${leaveType.id})`,
                 'lm_Employee@odata.bind': `/systemusers(${employeeId})`,
             } as any);
@@ -568,29 +605,60 @@ export class DataverseAdapter implements DataSourceAdapter {
     // Settings
     // ─────────────────────────────────────────────────────────────
 
+    // ─────────────────────────────────────────────────────────────
+    // Settings
+    // ─────────────────────────────────────────────────────────────
+
     async getSettings(): Promise<AppSetting[]> {
-        const result = await Lm_appsettingsService.getAll();
-        return (result.data || []).map(mapAppSetting);
+        console.log('[DataverseAdapter] getSettings called');
+        try {
+            // Explicitly select lm_value because Memo fields are sometimes excluded by default
+            const result = await Lm_appsettingsService.getAll({
+                select: ['lm_key', 'lm_value', 'lm_appsettingid']
+            });
+            console.log(`[DataverseAdapter] getSettings found ${result.data?.length || 0} settings`);
+
+            if (result.data && result.data.length > 0) {
+                console.log('[DataverseAdapter] First raw record:', JSON.stringify(result.data[0]));
+            }
+
+            return (result.data || []).map(mapAppSetting);
+        } catch (error) {
+            console.error('[DataverseAdapter] getSettings failed:', error);
+            throw error;
+        }
     }
 
     async updateSetting(key: string, value: string): Promise<void> {
-        // Find existing setting by key
-        const result = await Lm_appsettingsService.getAll({
-            filter: `lm_key eq '${key}'`,
-        });
+        console.log(`[DataverseAdapter] updateSetting called for key: ${key}, value length: ${value.length}`);
 
-        if (result.data && result.data.length > 0) {
-            // Update existing
-            await Lm_appsettingsService.update(result.data[0].lm_appsettingid, {
-                lm_value: value,
+        try {
+            // Find existing setting by key
+            const result = await Lm_appsettingsService.getAll({
+                filter: `lm_key eq '${key}'`,
             });
-        } else {
-            // Create new
-            await Lm_appsettingsService.create({
-                lm_key: key,
-                lm_value: value,
-                statecode: 0,
-            } as any);
+
+            console.log(`[DataverseAdapter] updateSetting search result for ${key}:`, result.data?.length);
+
+            if (result.data && result.data.length > 0) {
+                // Update existing
+                console.log(`[DataverseAdapter] Updating existing setting ${result.data[0].lm_appsettingid}`);
+                await Lm_appsettingsService.update(result.data[0].lm_appsettingid, {
+                    lm_value: value,
+                });
+            } else {
+                // Create new
+                console.log(`[DataverseAdapter] Creating new setting for ${key}`);
+                await Lm_appsettingsService.create({
+                    lm_key: key,
+                    lm_value: value,
+                    statecode: 0,
+                } as any);
+            }
+            console.log('[DataverseAdapter] updateSetting completed successfully');
+        } catch (error) {
+            console.error('[DataverseAdapter] updateSetting failed:', error);
+            throw error;
         }
     }
 

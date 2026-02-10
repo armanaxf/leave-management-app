@@ -16,9 +16,11 @@ export type Lm_leavebalancesstatuscode = keyof typeof Lm_leavebalancesstatuscode
 export interface Lm_leavebalancesBase {
   importsequencenumber?: string;
   lm_carryover?: string;
+  "lm_Employee@odata.bind"?: string;
   lm_employeeid: string;
   lm_entitlement?: string;
   lm_leavebalanceid: string;
+  "lm_LeaveType@odata.bind"?: string;
   lm_name: string;
   lm_pending?: string;
   lm_used?: string;
@@ -38,6 +40,9 @@ export interface Lm_leavebalances extends Lm_leavebalancesBase {
   createdon?: string;
   createdonbehalfbyname?: string;
   createdonbehalfbyyominame: string;
+  lm_employeename?: string;
+  lm_employeeyominame?: string;
+  lm_leavetypename?: string;
   modifiedbyname?: string;
   modifiedbyyominame: string;
   modifiedon?: string;
@@ -53,6 +58,10 @@ export interface Lm_leavebalances extends Lm_leavebalancesBase {
   _createdby_value?: string;
   createdonbehalfby?: object;
   _createdonbehalfby_value?: string;
+  lm_employee?: object;
+  _lm_employee_value?: string;
+  lm_leavetype?: object;
+  _lm_leavetype_value?: string;
   modifiedby?: object;
   _modifiedby_value?: string;
   modifiedonbehalfby?: object;

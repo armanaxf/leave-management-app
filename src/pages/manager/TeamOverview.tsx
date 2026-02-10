@@ -22,12 +22,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/layout/UserAvatar';
 import { Badge } from '@/components/ui/badge';
-import { useTeamMembers } from '@/hooks';
+import { useTeamMembers, useLeaveRequests } from '@/hooks';
 
 import { format } from 'date-fns';
 
 export default function TeamOverview() {
     const { data: teamMembers = [], isLoading } = useTeamMembers();
+    const { data: allRequests = [] } = useLeaveRequests();
+    const pendingCount = allRequests.filter(r => r.status === 'pending').length;
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
@@ -128,7 +130,7 @@ export default function TeamOverview() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">2</div>
+                            <div className="text-3xl font-bold">{pendingCount}</div>
                             <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
                         </CardContent>
                     </Card>

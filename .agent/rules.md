@@ -15,6 +15,12 @@ When building UI components for this project:
 - shadcn/ui + Tailwind CSS 4
 - Lucide React for icons (never use emojis as icons)
 
+## PAC CLI & Data
+
+- [pac-cli.md](pac-cli.md) — PAC CLI reference (path, auth, commands)
+- [code-apps-dataverse.md](code-apps-dataverse.md) — Dataverse CRUD via generated services (getAll, create, update, delete, IGetAllOptions)
+- [code-apps-data-sources.md](code-apps-data-sources.md) — Adding/managing data sources, connectors, Office 365 Users, build & deploy
+
 ## Pre-Delivery Checklist
 
 Before delivering any UI code, verify:

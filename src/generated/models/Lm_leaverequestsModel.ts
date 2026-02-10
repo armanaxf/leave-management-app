@@ -18,8 +18,10 @@ export const Lm_leaverequestsstatecode = {
 } as const;
 export type Lm_leaverequestsstatecode = keyof typeof Lm_leaverequestsstatecode;
 export const Lm_leaverequestsstatuscode = {
-  1: 'Active',
-  2: 'Inactive'
+  1: 'Pending',
+  2: 'Cancelled',
+  100000000: 'Approved',
+  100000001: 'Rejected'
 } as const;
 export type Lm_leaverequestsstatuscode = keyof typeof Lm_leaverequestsstatuscode;
 
@@ -36,6 +38,7 @@ export interface Lm_leaverequestsBase {
   lm_halfdayend?: Lm_leaverequestslm_halfdayend;
   lm_halfdaystart?: Lm_leaverequestslm_halfdaystart;
   lm_leaverequestid: string;
+  "lm_LeaveType@odata.bind"?: string;
   lm_reason?: string;
   lm_startdate?: string;
   lm_totaldays?: string;
@@ -56,6 +59,7 @@ export interface Lm_leaverequests extends Lm_leaverequestsBase {
   createdonbehalfbyyominame: string;
   lm_halfdayendname?: string;
   lm_halfdaystartname?: string;
+  lm_leavetypename?: string;
   modifiedbyname?: string;
   modifiedbyyominame: string;
   modifiedon?: string;
@@ -71,6 +75,8 @@ export interface Lm_leaverequests extends Lm_leaverequestsBase {
   _createdby_value?: string;
   createdonbehalfby?: object;
   _createdonbehalfby_value?: string;
+  lm_leavetype?: object;
+  _lm_leavetype_value?: string;
   modifiedby?: object;
   _modifiedby_value?: string;
   modifiedonbehalfby?: object;

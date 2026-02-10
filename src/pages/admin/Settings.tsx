@@ -59,38 +59,62 @@ export default function AdminSettings() {
     // Load settings from server
     useEffect(() => {
         if (remoteSettings && remoteSettings.length > 0) {
+            console.log('[Settings] Loaded remote settings:', remoteSettings);
             const newSettings = { ...DEFAULT_SETTINGS };
 
             remoteSettings.forEach(setting => {
                 const key = setting.key as keyof AppSettings;
                 if (key in newSettings) {
-                    // Parse value based on default type
+                    const rawVal = setting.value;
+                    // Protect against empty values unless it's explicitly cleared
+                    // But since we had a bug that saved empty values, we might be stuck with empty values.
+                    // If rawVal is empty string, we should probably stick with DEFAULT if it's supposed to be a number/boolean
+
+                    if (rawVal === null || rawVal === undefined) return;
+
                     const defaultVal = DEFAULT_SETTINGS[key];
+
                     if (typeof defaultVal === 'boolean') {
                         // @ts-ignore
-                        newSettings[key] = setting.value === 'true';
+                        if (rawVal === 'true') newSettings[key] = true;
+                        // @ts-ignore
+                        else if (rawVal === 'false') newSettings[key] = false;
+                        // if empty string, leave default
                     } else if (typeof defaultVal === 'number') {
-                        // @ts-ignore
-                        newSettings[key] = parseFloat(setting.value);
+                        const parsed = parseFloat(rawVal);
+                        if (!isNaN(parsed)) {
+                            // @ts-ignore
+                            newSettings[key] = parsed;
+                        }
                     } else {
+                        // String
                         // @ts-ignore
-                        newSettings[key] = setting.value;
+                        newSettings[key] = rawVal;
                     }
                 }
             });
 
+            console.log('[Settings] Applying new settings state:', newSettings);
             setSettings(newSettings);
         }
     }, [remoteSettings]);
 
     const handleSave = async () => {
         setIsSaving(true);
+        console.log('[Settings] handleSave started. Current state:', settings);
         try {
             // Save all settings
             const promises = Object.entries(settings).map(([key, value]) => {
+                // Sanitize value before saving
+                let valToSave = String(value);
+                if (typeof value === 'number' && isNaN(value)) {
+                    valToSave = String(DEFAULT_SETTINGS[key as keyof AppSettings]);
+                }
+
+                console.log(`[Settings] Saving ${key}:`, valToSave.substring(0, 50) + (valToSave.length > 50 ? '...' : ''));
                 return saveSetting({
                     key,
-                    value: String(value)
+                    value: valToSave
                 });
             });
 
@@ -109,6 +133,7 @@ export default function AdminSettings() {
     };
 
     const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+        console.log(`[Settings] updateSetting called for ${key}:`, value);
         setSettings(prev => ({ ...prev, [key]: value }));
     };
 
